@@ -124,23 +124,24 @@ module Wordmove
       return unless message.include?('--result-file=')
       return unless message.include?('mariadb-dump') || message.include?('mysqldump')
 
-      dump_path = message[/--result-file="([^"]+)"/, 1]
-      database = message[/\s([^\s]+)\z/, 1]
+      args = Shellwords.split(message)
+      dump_path = args.find { |arg| arg.start_with?('--result-file=') }&.split('=', 2)&.last
+      database = args.last
       return unless dump_path && database
 
       "dump database #{database} to #{dump_path}"
     end
 
     def gzip_summary(message)
-      if (path = message[/\Agzip -9 -f "([^"]+)"\z/, 1])
-        return "compress #{path}"
-      end
+      return unless message.start_with?('gzip ')
 
-      if (path = message[/\Agzip -d -f "([^"]+)"\z/, 1])
-        return "decompress #{path}"
-      end
+      args = Shellwords.split(message)
+      return unless args.length == 4 && args[2] == '-f'
 
-      nil
+      case args[1]
+      when '-9' then "compress #{args[3]}"
+      when '-d' then "decompress #{args[3]}"
+      end
     end
 
     def wp_search_replace_summary(message)

@@ -143,7 +143,7 @@ module Wordmove
         if options[:password].present?
           command << "--password=#{Shellwords.escape(options[:password])}"
         end
-        command << "--result-file=\"#{save_to_path}\""
+        command << "--result-file=#{Shellwords.escape(save_to_path)}"
         if options[:mysqldump_options].present?
           command << Shellwords.split(options[:mysqldump_options])
         end
@@ -177,19 +177,11 @@ module Wordmove
       end
 
       def compress_command(path)
-        command = ["gzip"]
-        command << "-9"
-        command << "-f"
-        command << "\"#{path}\""
-        command.join(" ")
+        "gzip -9 -f #{Shellwords.escape(path)}"
       end
 
       def uncompress_command(path)
-        command = ["gzip"]
-        command << "-d"
-        command << "-f"
-        command << "\"#{path}\""
-        command.join(" ")
+        "gzip -d -f #{Shellwords.escape(path)}"
       end
 
       def local_delete(path)

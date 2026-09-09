@@ -96,7 +96,7 @@ describe Wordmove::Deployer::Base do
         [
           "$(command -v mariadb-dump >/dev/null 2>&1 && echo mariadb-dump || echo mysqldump) --host=localhost",
           "--port=8888 --user=root --password=\\'\\\"\\$ciao",
-          "--result-file=\"./mysql dump.sql\"",
+          "--result-file=./mysql\\ dump.sql",
           "--max_allowed_packet=1G --no-create-db database_name"
         ].join(' ')
       )
@@ -208,7 +208,15 @@ describe Wordmove::Deployer::Base do
         "dummy file.sql"
       )
 
-      expect(command).to eq("gzip -9 -f \"dummy file.sql\"")
+      expect(command).to eq("gzip -9 -f dummy\\ file.sql")
+    end
+
+    it "escapes shell metacharacters in the path" do
+      path = %q(it's "$HOME" file.sql)
+      command = deployer.send(:compress_command, path)
+
+      expect(command).to eq("gzip -9 -f #{Shellwords.escape(path)}")
+      expect(Shellwords.split(command).last).to eq(path)
     end
   end
 
@@ -221,7 +229,7 @@ describe Wordmove::Deployer::Base do
         "dummy file.sql"
       )
 
-      expect(command).to eq("gzip -d -f \"dummy file.sql\"")
+      expect(command).to eq("gzip -d -f dummy\\ file.sql")
     end
   end
 

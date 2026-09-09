@@ -2,15 +2,22 @@ describe Wordmove::Logger do
   context "#task_step" do
     let(:logger) { described_class.new(STDOUT) }
 
-    it "prints single-line commands unchanged" do
-      expect { logger.task_step(true, 'gzip -9 -f "dump.sql"') }
+    it "summarizes gzip commands" do
+      expect { logger.task_step(true, 'gzip -9 -f dump.sql') }
         .to output(/compress dump\.sql/)
+        .to_stdout_from_any_process
+    end
+
+    it "summarizes gzip commands with escaped paths" do
+      command = "gzip -d -f #{Shellwords.escape('my site/dump.sql.gz')}"
+      expect { logger.task_step(true, command) }
+        .to output(%r{decompress my site/dump\.sql\.gz})
         .to_stdout_from_any_process
     end
 
     it "summarizes mysqldump commands" do
       command = '$(command -v mariadb-dump >/dev/null 2>&1 && echo mariadb-dump || echo mysqldump) ' \
-                '--host=localhost --user=root --password=secret --result-file="./wp-content/dump.sql" my_db'
+                '--host=localhost --user=root --password=secret --result-file=./wp-content/dump.sql my_db'
 
       expect { logger.task_step(true, command) }
         .to output(/dump database my_db to \.\/wp-content\/dump\.sql/)
