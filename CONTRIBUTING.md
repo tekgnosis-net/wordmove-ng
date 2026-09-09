@@ -1,5 +1,5 @@
 Welcome to the contributor guide. If you can't find important information you're welcome
-to edit this page or [open a discussion](https://github.com/welaika/wordmove/discussions/new?category=general) to talk with maintainers.
+to edit this page or [open a discussion](https://github.com/tekgnosis-net/wordmove-ng/discussions/new?category=general) to talk with maintainers.
 
 In this guide you'll find informations about:
 * [Bug reporting](#bug-reporting)
@@ -8,12 +8,12 @@ In this guide you'll find informations about:
 
 ### Bug reporting
 
-Wordmove is an hard piece of software to debug and it is used by many users with many
+wordmove-ng is an hard piece of software to debug and it is used by many users with many
 different environments - Windows also, even if it isn't officially supported by the dev team.
 
 So *please*, follow the issue template when reporting a bug.
 
-If you're not sure if you're standing in front of a bug, please [open a discussion](https://github.com/welaika/wordmove/discussions/new?category=general)
+If you're not sure if you're standing in front of a bug, please [open a discussion](https://github.com/tekgnosis-net/wordmove-ng/discussions/new?category=general)
 labeling it as "Triage", possibly using this template to report your problem (note: GH's discussions does not support templates ATM):
 
 ```markdown
@@ -23,7 +23,7 @@ labeling it as "Triage", possibly using this template to report your problem (no
 
 **Wordmove command**
 
-> Command used on the CLI: (e.g.: `wordmove pull --all --no-db`)
+> Command used on the CLI: (e.g.: `wordmove-ng pull --all --no-db`)
 
 **Expected behavior**
 
@@ -41,16 +41,16 @@ labeling it as "Triage", possibly using this template to report your problem (no
 
 - OS:
 - Ruby: (`ruby --version`)
-- Wordmove: (`wordmove --version`)
+- wordmove-ng: (`wordmove-ng --version`)
 
 **Doctor**
 
-* [x] running the `wordmove doctor` command returns all green
+* [x] running the `wordmove-ng doctor` command returns all green
 
 > (If it is not, report the error you got.)
 ```
 
-As a general advise: we tend to not support Wordmove's versions older than the latest stable.
+As a general advise: only the latest stable wordmove-ng release is supported. Bugs in the legacy `wordmove` 5.x gem belong to its own tracker.
 We'd appreciate your help opening an in depth report if you'd find that an older version is working
 better for you.
 
@@ -60,7 +60,7 @@ Thank you all for your support and for the love <3
 
 #### Get Wordmove
 
-* fork wordmove
+* fork wordmove-ng
 * clone your own repo
 * be sure to check-out the right branch, usually `master`
 
@@ -84,22 +84,23 @@ Wordmove has a decent test coverage. We _require_ that pull requests does not br
 In order to launch tests on you dev machine
 
 ```fish
-rake
+bundle exec rake
 ```
 
-The command will launch the test suite - written with RSpec - and rubocop.
+The command will launch the test suite - written with RSpec - and rubocop. Ruby 3.0 or
+newer is required; the CI matrix covers 3.0 through 4.0.
 
 In order to use the gem locally you can install it
 
 ```fish
-rake install
-wordmove --version
+bundle exec rake install
+wordmove-ng --version
 ```
 
 or run the executable directly
 
 ```fish
-bin/wordmove --version
+bin/wordmove-ng --version
 ```
 
 ### Maintainer tasks

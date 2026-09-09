@@ -13,7 +13,7 @@ assignees: ''
 
 **Wordmove command**
 
-> Command used on the CLI: (e.g.: `wordmove pull --all --no-db`)
+> Command used on the CLI: (e.g.: `wordmove-ng pull --all --no-db`)
 
 **Expected behavior**
 
@@ -31,10 +31,10 @@ assignees: ''
 
 - OS:
 - Ruby: (`ruby --version`)
-- Wordmove: (`wordmove --version`)
+- wordmove-ng: (`wordmove-ng --version`)
 
 **Doctor**
 
-* [x] running the `wordmove doctor` command returns all green
+* [x] running the `wordmove-ng doctor` command returns all green
 
 > (If it is not, report the error you got.)

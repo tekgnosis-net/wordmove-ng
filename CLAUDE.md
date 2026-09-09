@@ -39,10 +39,9 @@ rake install                        # build + install the gem locally
 `exe/wordmove` -> `Wordmove::CLI` (Thor, `lib/wordmove/cli.rb`) -> for `push`/`pull`:
 
 1. `Deployer::Base.deployer_for(cli_options)` builds a `Movefile`, loads dotenv, merges the
-   YAML options with CLI options, resolves the environment, then returns **one of three**
-   concrete classes: `Deployer::FTP`, `Deployer::Ssh::WpcliSqlAdapter`, or
-   `Deployer::Ssh::DefaultSqlAdapter` (SSH subclass chosen by `global.sql_adapter`, default
-   `wpcli`). Anything else raises `NoAdapterFound`.
+   YAML options with CLI options, resolves the environment, then returns `Deployer::SSH`.
+   An `ftp` block raises `NoAdapterFound` with a removal message; a leftover
+   `global.sql_adapter` key only warns.
 2. `Hook.run(action, :before, options)` runs local/remote hooks from the movefile.
 3. `Guardian#allows(task)` checks `<env>.forbid.<push|pull>.<task>`; forbidden tasks are
    logged and skipped, not raised.
@@ -64,27 +63,32 @@ Key pieces:
   (prefers `mariadb-dump`/`mariadb` when present), `Shellwords.escape`s every arg, and
   rewrites `utf8mb3*` collations/charsets in dumps via `normalize_collations!`
   (overridable through `global.collation_fallbacks` / `global.charset_fallbacks`).
-- **`Deployer::SSH`**: directory sync is rsync via Photocopier; the transfer root is always
-  the WordPress root and per-component sync is expressed with computed include/exclude path
-  lists, so `exclude` entries in the movefile are always relative to the WP root. Remote
-  commands, single-file `scp` transfers, deletes and remote hooks go through
-  `Wordmove::SshRunner` (`lib/wordmove/ssh_runner.rb`), which shells out to the system
-  `ssh`/`scp` with `BatchMode=yes` unless `ssh.password` is set (then `sshpass`). Do not
-  reintroduce Net::SSH for these: Photocopier pins net-ssh 6, which cannot do RSA SHA-2 auth.
-  `-s/--simulate` becomes `rsync --dry-run` and short-circuits DB steps.
-- **DB sync (`Ssh::WpcliSqlAdapter`)**: symmetric in both directions: backup the target,
-  dump the source, import on the target, then `wp search-replace` for `vhost` and
-  `wordpress_path` *on the target* (locally for pull, over SSH for push). The source DB is
-  never written. `check_*_db_prerequisites!` verifies `wp` on the target before any side
-  effect. `Ssh::DefaultSqlAdapter` instead rewrites the dump text with `SqlAdapter::Default`
-  (regex-based, weaker with nested serialized data).
-- **`Deployer::FTP`**: legacy path. Uploads one-time-password, self-deleting PHP scripts
-  rendered from `assets/dump.php.erb` / `import.php.erb` and drives them over HTTP. No remote
-  hooks. `--debug` keeps the output file.
-- **`Doctor`** (`lib/wordmove/doctor/*`): `wordmove doctor` checks movefile schema, ssh,
-  rsync, mysql, wp-cli.
-- **`Generators::Movefile`**: `wordmove init` wizard; reads `wp-config.php` and detects the
+- **`Deployer::SSH`** (the only deployer): directory sync is rsync via Photocopier; the
+  transfer root is always the WordPress root and per-component sync is expressed with
+  computed include/exclude path lists, so `exclude` entries in the movefile are always
+  relative to the WP root. Remote commands, single-file `scp` transfers, deletes and remote
+  hooks go through `Wordmove::SshRunner` (`lib/wordmove/ssh_runner.rb`), which shells out to
+  the system `ssh`/`scp` with `BatchMode=yes` unless `ssh.password` is set (then `sshpass`)
+  and wraps every remote command in `sh -c`. Do not reintroduce Net::SSH: Photocopier pins
+  net-ssh 6, which cannot do RSA SHA-2 auth. `-s/--simulate` becomes `rsync --dry-run` and
+  short-circuits DB steps.
+- **DB sync** (same class): symmetric in both directions: probe prerequisites on both
+  sides, back up the target, dump the source, import on the target, then `wp search-replace`
+  for `vhost` and `wordpress_path` *on the target* (locally for pull, over SSH for push),
+  optionally inside `wp maintenance-mode`. The source DB is never written. Nothing rewrites
+  dump text apart from `normalize_collations!`.
+- **`Doctor`** (`lib/wordmove/doctor/*`): `wordmove-ng doctor` validates the movefile schema
+  (rejecting `ftp`, reporting prefix collisions), then checks local mysql, wp-cli and rsync,
+  and per SSH environment: batch-mode auth, remote prerequisites via `Prerequisites`, and
+  gateway-password misuse.
+- **`Generators::Movefile`**: `wordmove-ng init` wizard; reads `wp-config.php` and detects the
   local vhost.
+- **`Prerequisites`** (`lib/wordmove/prerequisites.rb`): one `sh` probe listing missing
+  programs; `DB_SOURCE`/`DB_TARGET`/`REMOTE_ALL` requirement sets shared by deployer and
+  doctor.
+- **Knobs**: `global.maintenance_mode` (env override `WORDMOVE_MAINTENANCE_MODE`),
+  `global.collation_fallbacks`, `global.charset_fallbacks`. Add new toggles as movefile keys
+  with an env override and document them in README + CHANGELOG in the same commit.
 
 ## Conventions worth knowing
 
@@ -94,9 +98,11 @@ Key pieces:
 - Shell failures are detected via `$CHILD_STATUS.success?` and raised as
   `ShellCommandError`; custom exceptions live in `lib/wordmove/exceptions.rb`.
 - `simulate?` must be honoured by every new side-effecting step (log the step, then return).
-- Specs mock `Deployer::Base.deployer_for` / Photocopier rather than touching SSH/FTP.
+- Specs stub `Wordmove::SshRunner` (instance_double), `Photocopier::SSH.new` and
+  `Prerequisites.missing_*` rather than touching SSH; `spec/deployer/ssh_db_spec.rb` records
+  every local and remote command in order and asserts on the sequence.
   Movefile fixtures live in `spec/fixtures/movefiles/`; use `movefile_path_for("name")` from
   `spec/support/fixture_helpers.rb`. `silence_stream` in `spec_helper.rb` quiets noisy output.
-- Rubocop limits: 100-col lines, 20-line methods, ABC 40. Disable/enable comments are used
+- Rubocop limits: 100-col lines, 20-line methods, ABC 40. `rubocop:disable-next` is used
   sparingly around genuinely long orchestration methods (see `Hook.run`).
 - The untracked `supertool/` directory is local tooling, not part of the gem.

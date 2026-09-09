@@ -1,131 +1,178 @@
-# Wordmove
+# wordmove-ng
 
 ![logo](assets/images/wordmove-ng.png)
 
-This fork keeps Wordmove usable on current Ruby, OpenSSL, MariaDB, and Docker-based WordPress setups while preserving the original workflow and Movefile format.
+wordmove-ng moves WordPress sites between environments. One command pushes or pulls
+the core, uploads, themes, plugins, mu-plugins, languages and the database between a
+local install and any number of remote hosts over SSH, rewriting URLs and paths on the
+target with wp-cli.
 
-[![Tests](https://github.com/kokiddp/wordmove/actions/workflows/ruby.yml/badge.svg)](https://github.com/kokiddp/wordmove/actions/workflows/ruby.yml)
+It is the maintained, independent successor of [Wordmove](https://github.com/welaika/wordmove)
+by weLaika, continued through the [kokiddp fork](https://github.com/kokiddp/wordmove).
+The movefile format, commands and flags are unchanged. What changed is under the hood, and
+in a few places where the old behaviour was unsafe. See [Upgrading from wordmove 5.x](#upgrading-from-wordmove-5x).
 
-## What This Fork Changes
+[![Tests](https://github.com/tekgnosis-net/wordmove-ng/actions/workflows/ruby.yml/badge.svg)](https://github.com/tekgnosis-net/wordmove-ng/actions/workflows/ruby.yml)
 
-- Runs on modern Ruby versions, including Ruby 3.4 and the current Ruby 4.0 CI line.
-- Never opens a Ruby-side SSH session: every remote operation uses the system `ssh`, `scp` and `rsync`, so there is nothing to break on new OpenSSL or Ruby releases.
-- Prefers `mariadb` and `mariadb-dump` when available, while still falling back to `mysql` and `mysqldump`.
-- Handles MariaDB dump "sandbox mode" headers during import.
-- Normalizes unsupported collations and charset declarations in SQL dumps before import.
-- Uses `wp-cli` in a Docker-friendly way with `--allow-root`.
-- Prints concise command summaries instead of dumping long multi-line shell wrappers to the console.
+## Highlights
 
-## Changelog Since `bc9bce6`
-
-- Ruby compatibility:
-  - The repo default Ruby is now `3.4.9`.
-  - Ruby 3.0 is the minimum; the GitHub Actions matrix tests `3.0` through `4.0` and runs rubocop.
-  - Runtime dependencies were updated for modern Ruby packaging and stdlib extraction: `thor`, `base64`, `bigdecimal`, `mutex_m`, `ed25519`, and `bcrypt_pbkdf`.
-  - `Movefile` YAML loading now works across older and newer Psych versions.
-  - `bin/console` now falls back to `irb` when `pry` is unavailable on newer Rubies.
-
-- Database sync behavior:
-  - Dump commands now auto-detect `mariadb-dump` or `mysqldump`.
-  - Import commands now auto-detect `mariadb` or `mysql`.
-  - Movefiles can now express unix socket connections with `database.socket`.
-  - Legacy `--socket` usage inside `mysql_options` and `mysqldump_options` is still supported.
-  - Imports strip the MariaDB sandbox header when present, append a trailing `COMMIT;`, enable `--binary-mode`, disable foreign key checks, and preserve exit status correctly.
-  - Existing `mysql_options` are respected without duplicating `--binary-mode`.
-
-- SQL dump normalization:
-  - Added built-in collation fallbacks for newer `utf8mb3` collations that older targets may not understand.
-  - Added built-in charset fallback from `utf8mb3` to `utf8mb4`.
-  - These mappings can be overridden in `movefile.yml`.
-
-- SSH transport and database sync:
-  - Remote commands, `scp` transfers and remote hooks now use the system `ssh`/`scp` binaries instead of Net::SSH, so key authentication behaves exactly like rsync (agent, `~/.ssh/config`, RSA SHA-2 signatures). No more surprise password prompts on the DB step.
-  - `wordmove-ng push -d` with the `wpcli` adapter now imports on the remote and runs `wp search-replace` there. The local database is never modified during a push; `wp` is required on the remote host instead.
-  - `wordmove-ng doctor` tests non interactive SSH authentication and remote `wp` availability for every SSH environment.
-  - Hook and Guardian output now masks movefile secrets like the deployer log does.
-
-- WP-CLI and hooks:
-  - `wp cli param-dump` now uses `--allow-root`, which avoids failures in root-owned Docker or containerized environments.
-  - Hook working directories are now shell-escaped more safely.
-
-- Logging and developer experience:
-  - Long generated shell scripts are summarized as meaningful actions such as SQL dump, import, compression, and `wp search-replace`.
-  - New specs cover logger summaries.
+- **No Ruby-side SSH.** Every remote operation goes through the system `ssh`, `scp` and
+  `rsync`, so your agent, `~/.ssh/config`, jump hosts and modern key types all just work,
+  and nothing breaks on a new OpenSSL or Ruby.
+- **The source database is never written.** Push and pull both dump the source, import on
+  the target and run `wp search-replace` on the target.
+- **Fails before it breaks anything.** Prerequisites on both sides are probed before any
+  backup, dump or import. `wordmove-ng doctor` checks SSH authentication and remote programs
+  per environment.
+- **Optional maintenance mode** around the target's database replacement.
+- MariaDB first (`mariadb`, `mariadb-dump`) with MySQL fallback, sandbox-header handling,
+  collation and charset normalisation, socket and port support.
+- Runs on Ruby 3.0 through 4.0.
 
 ## Installation
 
-This fork is typically installed directly from GitHub:
+Ruby 3.0 or newer is required.
+
+```bash
+gem install wordmove-ng
+```
+
+Until the gem is on rubygems.org, or to run the latest master:
 
 ```bash
 gem install specific_install
-gem specific_install https://github.com/kokiddp/wordmove.git
+gem specific_install https://github.com/tekgnosis-net/wordmove-ng.git
 ```
 
-For development from a checkout:
+From a checkout:
 
 ```bash
 bundle install
 bin/wordmove-ng --help
 ```
 
-## Supported Ruby Versions
-
-- Local default in this repository: `3.4.9`
-- CI coverage: `3.0`, `3.1`, `3.2`, `3.3`, `3.4`, `4.0`
-- Minimum declared Ruby version in the gemspec: `3.0.0`
-
-## Peer Dependencies
-
-Wordmove is orchestration glue. These tools still need to exist in your environment and be available in `$PATH`.
-
-| Program | Mandatory? | Notes |
-| --- | --- | --- |
-| `rsync` | Yes for SSH protocol | Used for file sync |
-| `mysql` or `mariadb` | Yes | Used for DB import and checks |
-| `mysqldump` or `mariadb-dump` | Yes | Used for DB export |
-| `wp` | Yes by default | Required by the default `wpcli` SQL adapter on the *target* side of a DB sync (see below) |
-| `ssh` / `scp` | Yes for SSH protocol | Used for remote commands, single file transfers and remote hooks |
-| `sshpass` | Only with `ssh.password` | Feeds the configured password to `ssh`, `scp` and `rsync` |
-
-Remote hosts are also expected to provide `gzip`, `nice`, `rsync`, and either `mysql`/`mariadb` plus `mysqldump`/`mariadb-dump` when database sync happens over SSH. With the default `wpcli` SQL adapter the remote host also needs `wp` in the login shell `$PATH` for `wordmove-ng push -d`.
-
-### SSH authentication
-
-Every SSH operation (rsync, remote commands, `scp` transfers and remote hooks) goes through the system `ssh` client, so your ssh-agent, `~/.ssh/config`, `ProxyJump`/`ssh.gateway` and modern key types all behave exactly as they do on the command line. When no `ssh.password` is configured, connections run with `BatchMode=yes`: a failing key authentication is reported as an error instead of an interactive password prompt. `wordmove-ng doctor` tests non interactive authentication against every SSH environment in your movefile, then checks that `rsync`, `gzip`, `mysql`/`mariadb`, `mysqldump`/`mariadb-dump` and `wp` are available there.
-
-Remote commands are always executed through `sh -c`, so the remote user's login shell can be fish, zsh, csh or anything else. Programs only need to be in the `$PATH` of a non interactive login. `ssh.gateway` is passed as `ssh -J`; a `gateway.password` cannot be used and is ignored (the jump host must accept your key or agent).
-
-### Database sync with the `wpcli` adapter
-
-Both directions follow the same shape: dump the source, import the dump on the target, then run `wp search-replace` on the target for `vhost` and `wordpress_path`. The source database is only ever read.
-
-- `wordmove-ng pull -d`: remote dump, local import, `wp search-replace` locally (requires `wp` locally).
-- `wordmove-ng push -d`: local dump, remote import, `wp search-replace` on the remote over SSH (requires `wp` on the remote).
-
-Before touching either database Wordmove probes both sides for the programs the operation needs (`gzip`, `mysqldump`/`mariadb-dump` on the source; `gzip`, `mysql`/`mariadb`, `wp` on the target) and aborts with a list of what is missing, so a misconfigured host never leaves a half-done sync.
-
-Set `global.maintenance_mode: true` (or export `WORDMOVE_MAINTENANCE_MODE=1` for a single run) to wrap the target's import and search-replace in `wp maintenance-mode activate` / `deactivate`, so visitors see WordPress's maintenance page instead of a half-adapted site. Deactivation runs even if the adaptation fails. The default is off.
-
-`wp search-replace` runs with `--all-tables`, so every table in the target database is adapted, including non WordPress tables sharing it. A backup of the target database is downloaded to the local `wp-content/` directory before any import; if the remote adaptation fails after the import, Wordmove logs that backup path so you can restore or re-run the search-replace by hand.
-
-## Quick Start
+## Quick start
 
 ```bash
-wordmove-ng init
-wordmove-ng doctor
-wordmove-ng pull -e staging -d
-wordmove-ng push -e production --all
+cd /path/to/your/wordpress   # where wp-config.php lives
+wordmove-ng init             # writes movefile.yml, pre-filled from wp-config.php
+wordmove-ng doctor           # validates movefile.yml, local tools, SSH auth, remote tools
+wordmove-ng pull -e staging --all
+wordmove-ng push -e production -t -p   # themes and plugins only
+wordmove-ng push -e production -d -s   # simulate a database push
 ```
 
-Run `wordmove help` to see all commands and flags.
+Run `wordmove-ng help` for all commands and `wordmove-ng help push` for the flags.
+Component flags: `-w` core, `-u` uploads, `-t` themes, `-p` plugins, `-m` mu-plugins,
+`-l` languages, `-d` database, `--all` everything (`--all --no-uploads` to exclude one).
+`-s` simulates, `-e` picks the environment, `-c` points at another movefile.
 
-## `movefile.yml`
+## Peer dependencies
 
-Basic example:
+wordmove-ng is orchestration glue around standard tools.
+
+**Locally**
+
+| Program | Needed for |
+| --- | --- |
+| `ssh`, `scp`, `rsync` | every remote operation |
+| `sshpass` | only when `ssh.password` is set in the movefile |
+| `gzip` | database sync |
+| `mysqldump` or `mariadb-dump` | `push -d` (dumping the local database) |
+| `mysql` or `mariadb` | `pull -d` (importing into the local database) and `doctor` |
+| `wp` ([WP-CLI](https://wp-cli.org)) | `pull -d` (adapting the local database) |
+
+**On each remote**, in the `$PATH` of a non interactive login
+
+| Program | Needed for |
+| --- | --- |
+| `rsync`, `gzip` | file and database sync |
+| `mysqldump` or `mariadb-dump` | `pull -d` |
+| `mysql` or `mariadb`, `wp` | `push -d` |
+
+`wordmove-ng doctor` reports exactly what is missing where, and every database operation
+re-checks before doing anything.
+
+## SSH authentication
+
+Everything uses the system `ssh` client. When no `ssh.password` is configured, connections run
+with `BatchMode=yes`: a failing key authentication is reported as an error with the exact
+command that failed, never an interactive password prompt.
+
+- `ssh.host`, `ssh.user`, `ssh.port` map to the obvious ssh options. A host configured in
+  `~/.ssh/config` works with only `ssh.host` set.
+- `ssh.password` is passed through `sshpass` to `ssh`, `scp` and `rsync`. Keys are strongly
+  preferred.
+- `ssh.gateway` becomes `ssh -J`. The jump host must accept your key or agent; a
+  `gateway.password` cannot be honoured and is ignored (doctor warns).
+- `ssh.rsync_options` are appended to the rsync command.
+
+Remote commands always run through `sh -c`, so the remote login shell may be bash, zsh,
+fish or csh.
+
+## Database sync
+
+Both directions have the same shape: dump the source, import the dump on the target, run
+`wp search-replace` on the target for `vhost` and `wordpress_path`. The source database is
+only ever read.
+
+- `wordmove-ng pull -d`: back up the local database, dump the remote, import locally,
+  search-replace locally.
+- `wordmove-ng push -d`: back up the remote database, dump locally, import on the remote,
+  search-replace on the remote over SSH.
+
+Backups are written to the local `wp-content/` directory as timestamped `.sql.gz` files
+before any import. If the remote adaptation fails after the import, the log names the
+backup to restore from.
+
+`wp search-replace` runs with `--all-tables --skip-columns=guid`, so every table in the
+target database is adapted, including non WordPress tables sharing it, and post GUIDs are
+left alone as WordPress recommends. `--no-adapt` skips the search-replace entirely.
+
+If one of the four search terms is a prefix of another (for example a local vhost of
+`https://site.test` and a remote of `https://site.test.example.com`) the shorter replacement
+also rewrites the longer value. Doctor reports this as an error and the DB step warns.
+
+### Maintenance mode
 
 ```yaml
 global:
-  sql_adapter: wpcli
+  maintenance_mode: true
+```
+
+wraps the target's import and search-replace in `wp maintenance-mode activate` and
+`deactivate`, so visitors see the WordPress maintenance page rather than a site pointing at
+the other environment's URLs for a few seconds. Deactivation runs even when the adaptation
+fails. `WORDMOVE_MAINTENANCE_MODE=1` forces it on for a single run. Default: off.
+
+### MariaDB and MySQL compatibility
+
+- `mariadb` and `mariadb-dump` are preferred when present, falling back to `mysql` and
+  `mysqldump`.
+- Dumps starting with the MariaDB sandbox header (`/*!999999- enable the sandbox mode */`)
+  import cleanly on older servers.
+- Imports run with `--binary-mode`, `SET FOREIGN_KEY_CHECKS=0` and a trailing `COMMIT;`,
+  unless `mysql_options` already sets binary mode.
+- `database.socket` and `database.port` are first-class; `--socket` inside
+  `mysql_options` or `mysqldump_options` still works.
+- Newer `utf8mb3` collations are rewritten to `utf8mb4_unicode_ci` and `utf8mb3` to
+  `utf8mb4` before import. Override or extend the mappings:
+
+```yaml
+global:
+  collation_fallbacks:
+    utf8mb3_uca1400_ai_ci: utf8mb4_unicode_ci
+  charset_fallbacks:
+    utf8mb3: utf8mb4
+```
+
+- `wp` is always called with `--allow-root`, so root-owned Docker installs work.
+
+## `movefile.yml`
+
+```yaml
+global:
+  maintenance_mode: false
 
 local:
   vhost: http://vhost.local
@@ -136,6 +183,8 @@ local:
     user: user
     password: password
     host: localhost
+    # port: 3306
+    # socket: /path/to/mysql.sock
 
 production:
   vhost: https://example.com
@@ -146,190 +195,118 @@ production:
     user: user
     password: password
     host: host
-    # port: 3308
-    # socket: /path/to/mysql.sock
     # mysqldump_options: --max_allowed_packet=50MB
     # mysql_options: --protocol=TCP
 
   exclude:
     - ".git/"
-    - ".gitignore"
+    - ".env"
     - "node_modules/"
-    - "bin/"
-    - "tmp/*"
-    - "Gemfile*"
-    - "Movefile"
-    - "movefile"
-    - "movefile.yml"
-    - "movefile.yaml"
     - "wp-config.php"
     - "wp-content/*.sql.gz"
-    - "*.orig"
 
   ssh:
     host: host
     user: user
+    # port: 22
+    # password: only with sshpass installed; prefer keys
+    # rsync_options: --verbose
+    # gateway:
+    #   host: bastion.example.com
+    #   user: jump
+
+  # forbid:
+  #   push:
+  #     db: true          # never push the database to production
+  # hooks:
+  #   push:
+  #     before:
+  #       - command: echo "about to push"
+  #         where: local
+  #     after:
+  #       - command: wp cache flush
+  #         where: remote
+  #         raise: false
 ```
 
-Multi-environment Movefiles are still supported. Any first-level key other than `global` and `local` is treated as a remote environment. Use `-e staging`, `-e production`, and so on.
-
-## Environment Variables
-
-Movefiles support ERB, so secrets can be loaded from the shell or from `.env` files.
+Every first-level key other than `global` and `local` is a remote environment; pick one with
+`-e`. `movefile.yml` is evaluated as ERB, so secrets can come from the environment or from
+a `.env` / `.env.<environment>` file next to it:
 
 ```yaml
 production:
   database:
-    user: "<%= ENV['PROD_DB_USER'] %>"
     password: "<%= ENV['PROD_DB_PASS'] %>"
 ```
 
-You can populate those variables either in the shell:
+File sync mirrors the source: files missing on the source are deleted on the destination.
+Put anything you need to keep in `exclude`, which is always relative to `wordpress_path`.
 
-```bash
-export PROD_DB_USER="username"
-export PROD_DB_PASS="password"
-```
-
-or in a `.env` file next to the Movefile:
-
-```bash
-PROD_DB_USER="username"
-PROD_DB_PASS="password"
-```
-
-## SQL Import and Dump Compatibility
-
-This fork changes DB import/export behavior in a few important ways:
-
-- MariaDB client binaries are preferred automatically when present.
-- You can now configure unix socket connections directly as `database.socket: /path/to/mysqld.sock`.
-- The older `--socket ...` form inside `database.mysql_options` or `database.mysqldump_options` still works and remains backward-compatible.
-- Dumps beginning with:
-
-```sql
-/*!999999- enable the sandbox mode */
-```
-
-  are imported correctly by stripping that header before the actual import.
-- Imports append a final `COMMIT;` to reduce partial transaction edge cases.
-- Imports enable `SET FOREIGN_KEY_CHECKS=0` and `--binary-mode` unless you already configured binary mode explicitly.
-
-These changes are especially useful when moving databases between Local, Docker, MariaDB 11+, and older shared-hosting MySQL servers.
-
-Example:
-
-```yaml
-local:
-  database:
-    name: local
-    user: root
-    password: root
-    host: localhost
-    socket: /home/koki/.config/Local/run/eZGRlahhA/mysql/mysqld.sock
-```
-
-When `wordmove-ng init` reads a `wp-config.php` entry like:
-
-```php
-define('DB_HOST', 'localhost:/home/koki/.config/Local/run/eZGRlahhA/mysql/mysqld.sock');
-```
-
-it now generates separate `host` and `socket` fields in the Movefile instead of leaving the combined value inside `host`.
-
-Likewise, when `DB_HOST` contains a custom port such as:
-
-```php
-define('DB_HOST', 'localhost:3307');
-```
-
-`wordmove-ng init` now generates separate `host` and `port` fields and uncomments the local `port` line in the generated Movefile.
-
-## Collation Fallbacks
-
-If your source dump contains collations unsupported by the destination server, Wordmove can rewrite them before import.
-
-Default behavior already normalizes newer `utf8mb3` collations such as:
-
-- `utf8mb3_uca1400_ai_ci`
-- `utf8mb3_uca1400_as_cs`
-- `utf8mb3_unicode_520_ci`
-
-to `utf8mb4_unicode_ci`, and upgrades `utf8mb3` to `utf8mb4`.
-
-You can override the defaults in `movefile.yml`:
-
-```yaml
-global:
-  collation_fallbacks:
-    utf8mb3_uca1400_ai_ci: utf8mb4_unicode_ci
-    utf8mb3_uca1400_as_cs: utf8mb4_unicode_ci
-
-  charset_fallbacks:
-    utf8mb3: utf8mb4
-```
-
-## Docker and Root-Owned WordPress Installs
-
-The default `wpcli` adapter now calls `wp cli param-dump --allow-root --with-values`, which makes path discovery and search-replace flows work better in containerized environments where `wp` runs as `root`.
+The wiki has the full reference:
+[movefile.yml configurations explained](https://github.com/tekgnosis-net/wordmove-ng/wiki/movefile.yml-configurations-explained),
+[Usage and flags explained](https://github.com/tekgnosis-net/wordmove-ng/wiki/Usage-and-flags-explained),
+[Multiple environments explained](https://github.com/tekgnosis-net/wordmove-ng/wiki/Multiple-environments-explained),
+[Hooks](https://github.com/tekgnosis-net/wordmove-ng/wiki/Hooks).
+Where a wiki page still describes wordmove 5.x behaviour, this README wins.
 
 ## Logging
 
-Long generated shell wrappers are summarized into shorter, more useful task lines. For example, instead of printing the full multi-line SQL import script, Wordmove now logs intent-oriented summaries such as:
+Long generated shell scripts are summarised into intent lines such as
+`dump database my_db to ./wp-content/dump.sql`, `compress ./wp-content/dump.sql`,
+`wp search-replace old.test -> new.test in /var/www/site` and
+`import SQL dump ... (strip sandbox header, append COMMIT)`. Passwords, hosts, vhosts and
+paths from the movefile are masked as `[secret]` in all output, including hook output.
 
-- `dump database my_db to ./wp-content/dump.sql`
-- `compress ./wp-content/dump.sql`
-- `wp search-replace old.example.test -> new.example.test in ./public`
-- `import SQL dump ./wp-content/dump.sql into database local (strip sandbox header, append COMMIT)`
+## Upgrading from wordmove 5.x
 
-This keeps normal output readable without hiding what Wordmove is actually doing.
+This applies to both the original `wordmove` gem and the kokiddp fork. Your `movefile.yml`
+keeps working with the exceptions below.
 
-## Usage Notes
-
-### Mirroring
-
-File push and pull operations mirror the source. Files missing from the source can be deleted on the destination. Exclude anything you need to preserve.
-
-### SSH
-
-- `rsync` must be installed locally.
-- SSH public key authentication is still the recommended setup.
-- Passwords inside `movefile.yml` may still work, but key-based auth is strongly preferred.
-
-### FTP and SFTP
-
-FTP and SFTP support was removed in wordmove-ng 6.0. It only ever existed for shell-less shared hosts, where the database had to be handled by uploading temporary PHP scripts and URLs had to be rewritten in the dump text with a regex. A movefile with an `ftp` block now fails with a clear error. If you still need an FTP-only host, keep using the legacy `wordmove` 5.x gem for it.
-
-## Upstream Documentation
-
-Most of the original Wordmove workflow and Movefile format still match the upstream documentation:
-
-- [Usage and flags explained](https://github.com/welaika/wordmove/wiki/Usage-and-flags-explained)
-- [Multiple environments explained](https://github.com/welaika/wordmove/wiki/Multiple-environments-explained)
-- [Movefile configuration explained](https://github.com/welaika/wordmove/wiki/movefile.yml-configurations-explained)
-- [Hooks](https://github.com/welaika/wordmove/wiki/Hooks)
-
-Where this README and the upstream wiki disagree, this README describes the behavior of this fork.
+1. **Install the new gem and use the new command.** `gem install wordmove-ng`, then call
+   `wordmove-ng` instead of `wordmove`. Both gems can stay installed side by side.
+2. **Ruby 3.0 or newer.** Ruby 2.6 and 2.7 are no longer supported.
+3. **Put `wp` on your remotes.** `push -d` now adapts the database on the remote, so WP-CLI
+   must be installed there and be in the `$PATH` of a non interactive login. It is a single
+   PHAR file: [installing WP-CLI](https://wp-cli.org/#installing). Run `wordmove-ng doctor`
+   to confirm.
+4. **FTP and SFTP are gone.** A movefile with an `ftp` block fails with a clear error. FTP
+   only ever existed for shell-less shared hosts, where the database had to be handled by
+   uploading temporary PHP scripts and URLs were rewritten in the dump with a regex. Keep the
+   legacy `wordmove` 5.x gem for such hosts, or move them to SSH.
+5. **`global.sql_adapter` is ignored.** URL and path adaptation always uses wp-cli on the
+   target. The key is still accepted, with a warning, so old movefiles validate; remove it
+   when convenient. `database.charset` (removed in 3.0) is no longer accepted by the schema.
+6. **Push no longer touches your local database.** Old versions ran `wp search-replace`
+   on the live local database during a push and restored it afterwards, which left the local
+   site pointing at production if anything failed in between. That is gone.
+7. **SSH behaves like rsync did.** If rsync worked but the database step asked for a
+   password, the cause was the old Net::SSH library, which could not sign RSA keys with
+   SHA-2. That path no longer exists. If key authentication fails now, you get an error with
+   the failing `ssh` command instead of a prompt. `ssh.gateway.password` is ignored.
+8. **Remote programs are checked up front.** Missing `gzip`, `mysql`, `mysqldump` or `wp`
+   on either side aborts before any backup or dump, listing what is missing.
+9. **New, optional:** `global.maintenance_mode` (see above).
 
 ## Contributing
 
 ```bash
-bundle exec rspec
+bundle install
+bundle exec rake          # specs + rubocop, what CI runs
+bundle exec rspec spec/deployer/ssh_db_spec.rb   # one file
 ```
 
-The project CI runs the suite and rubocop across:
+CI runs on Ruby 3.0, 3.1, 3.2, 3.3, 3.4 and 4.0. Please keep this README and the
+CHANGELOG updated when changing user-facing behaviour. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
-- `3.0`
-- `3.1`
-- `3.2`
-- `3.3`
-- `3.4`
-- `4.0`
+## Credits and licence
 
-Please keep the README updated when changing user-facing behavior, installation steps, supported versions, or command output.
+- Wordmove was created and maintained for a decade by [weLaika](https://dev.welaika.com):
+  Stefano Verna, Ju Liu, Fabrizio Monti, Alessandro Fazzi, Filippo Gangi Dino and
+  [many contributors](https://github.com/welaika/wordmove/graphs/contributors). The
+  workflow, movefile format and most of the code are theirs.
+- [kokiddp](https://github.com/kokiddp/wordmove) kept it running on modern Ruby, OpenSSL 3
+  and MariaDB and added socket, collation and Docker support.
+- wordmove-ng is maintained by [tekgnosis.net](https://github.com/tekgnosis-net).
 
-## Credits
-
-- The dump script is based on the [`MYSQL-dump` PHP package](https://github.com/dg/MySQL-dump) by David Grudl.
-- The import script uses the [BigDump](http://www.ozerov.de/bigdump/) library.
-- Original project by [weLaika](https://dev.welaika.com).
+MIT licence, see [LICENSE](LICENSE).
