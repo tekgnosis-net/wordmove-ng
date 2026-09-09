@@ -5,6 +5,19 @@ All notable changes to wordmove-ng are documented here. The project follows
 are listed at https://github.com/welaika/wordmove/releases; the kokiddp fork's changes
 between 5.2.2 and this project are summarised under 6.0.0.
 
+## [6.0.1](https://github.com/tekgnosis-net/wordmove-ng/compare/v6.0.0...v6.0.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* 310 ([cba507b](https://github.com/tekgnosis-net/wordmove-ng/commit/cba507b24a5d261d5650b72d4c5d437d97b91140))
+* 402 ([7984c2d](https://github.com/tekgnosis-net/wordmove-ng/commit/7984c2d2db40282afa3ee7060bfd847ea0b46041))
+* 416. Also go back to quoted strings in `exclude`: issues observed ([8d6dbe5](https://github.com/tekgnosis-net/wordmove-ng/commit/8d6dbe52bc7ce82a9597a17a31209d051d1c01e6))
+* 422: --no-* flags not handled ([a8a237e](https://github.com/tekgnosis-net/wordmove-ng/commit/a8a237eef0497f84347bd3f8cca3c58d385351f9))
+* 436 ([1eba347](https://github.com/tekgnosis-net/wordmove-ng/commit/1eba347bb9d2572d5c099d0ac4b4c34d93b0cbbb))
+* 477 ([6688c1a](https://github.com/tekgnosis-net/wordmove-ng/commit/6688c1ae47c3381729acad948fbbd34d22561dee))
+* local_delete does not handle simulation correctly ([29fa8b9](https://github.com/tekgnosis-net/wordmove-ng/commit/29fa8b995e41642ddc8717f248bb7d53e5a80379))
+
 ## 6.0.0 (unreleased)
 
 First release as an independent project. Breaking changes are marked **breaking**.
