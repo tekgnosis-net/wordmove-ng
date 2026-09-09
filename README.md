@@ -9,7 +9,7 @@ This fork keeps Wordmove usable on current Ruby, OpenSSL, MariaDB, and Docker-ba
 ## What This Fork Changes
 
 - Runs on modern Ruby versions, including Ruby 3.4 and the current Ruby 4.0 CI line.
-- Fixes `net-ssh` and OpenSSL 3 incompatibilities that break SSH connections on newer Rubies.
+- Never opens a Ruby-side SSH session: every remote operation uses the system `ssh`, `scp` and `rsync`, so there is nothing to break on new OpenSSL or Ruby releases.
 - Prefers `mariadb` and `mariadb-dump` when available, while still falling back to `mysql` and `mysqldump`.
 - Handles MariaDB dump "sandbox mode" headers during import.
 - Normalizes unsupported collations and charset declarations in SQL dumps before import.
@@ -24,11 +24,6 @@ This fork keeps Wordmove usable on current Ruby, OpenSSL, MariaDB, and Docker-ba
   - Runtime dependencies were updated for modern Ruby packaging and stdlib extraction: `thor`, `base64`, `bigdecimal`, `mutex_m`, `ed25519`, and `bcrypt_pbkdf`.
   - `Movefile` YAML loading now works across older and newer Psych versions.
   - `bin/console` now falls back to `irb` when `pry` is unavailable on newer Rubies.
-
-- SSH and OpenSSL 3:
-  - Added a compatibility layer for `net-ssh 6.1` on OpenSSL 3.
-  - Fixes cover EC, RSA, and DSA host key parsing plus ECDH and DH key generation.
-  - This removes the common Ruby 3.4/OpenSSL 3 crashes seen during SSH deploys and DB sync.
 
 - Database sync behavior:
   - Dump commands now auto-detect `mariadb-dump` or `mysqldump`.
@@ -55,7 +50,7 @@ This fork keeps Wordmove usable on current Ruby, OpenSSL, MariaDB, and Docker-ba
 
 - Logging and developer experience:
   - Long generated shell scripts are summarized as meaningful actions such as SQL dump, import, compression, and `wp search-replace`.
-  - New specs cover logger summaries and the OpenSSL/SSH compatibility layer.
+  - New specs cover logger summaries.
 
 ## Installation
 

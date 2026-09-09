@@ -24,6 +24,18 @@ describe Wordmove::Deployer::SSH do
     )
   end
 
+  context "when simulating with rsync_options already configured" do
+    let(:cli_options) do
+      { config: movefile_path_for('with_rsync_options'), environment: 'staging', simulate: true }
+    end
+
+    it "appends --dry-run without mutating the shared options" do
+      2.times { Wordmove::Deployer::Base.deployer_for(cli_options) }
+      expect(Photocopier::SSH).to have_received(:new)
+        .with(hash_including(rsync_options: '--verbose --dry-run')).twice
+    end
+  end
+
   context "#remote_run" do
     it "runs the command through the system ssh and returns true on success" do
       allow(runner).to receive(:run).with('ls').and_return(['', '', 0])

@@ -18,19 +18,8 @@ module Wordmove
       def initialize(environment, options)
         super(environment, options)
 
-        ssh_options = remote_options[:ssh]
-
-        # The runner must be built before Photocopier, which strips :gateway and
-        # :rsync_options out of the very same hash.
-        @runner = SshRunner.new(ssh_options)
-
-        if simulate? && ssh_options[:rsync_options]
-          ssh_options[:rsync_options].concat(" --dry-run")
-        elsif simulate?
-          ssh_options[:rsync_options] = "--dry-run"
-        end
-
-        @copier = Photocopier::SSH.new(ssh_options).tap { |c| c.logger = logger }
+        @runner = SshRunner.new(remote_options[:ssh])
+        @copier = Photocopier::SSH.new(photocopier_options).tap { |c| c.logger = logger }
 
         @local_dump_path = local_wp_content_dir.path("dump.sql")
         @local_backup_path = local_wp_content_dir.path("local-backup-#{Time.now.to_i}.sql")
@@ -40,6 +29,17 @@ module Wordmove
       end
 
       private
+
+      # Photocopier deletes :gateway and :rsync_options from the hash it is given
+      # and we append --dry-run when simulating, so hand it a copy rather than the
+      # hash shared with the movefile options.
+      def photocopier_options
+        ssh_options = remote_options[:ssh].dup
+        return ssh_options unless simulate?
+
+        ssh_options[:rsync_options] = [ssh_options[:rsync_options], '--dry-run'].compact.join(' ')
+        ssh_options
+      end
 
       def push_db
         super

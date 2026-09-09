@@ -33,8 +33,6 @@ mapping:
         type: str
       port:
         type: int
-      charset:
-        type: str
   exclude:
     type: seq
     sequence:

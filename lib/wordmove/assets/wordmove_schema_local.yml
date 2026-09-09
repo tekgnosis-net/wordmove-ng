@@ -19,7 +19,6 @@ mapping:
       mysql_options:
       mysqldump_options:
       port:
-      charset:
   paths:
     type: map
     mapping:

@@ -20,7 +20,6 @@ require 'thor'
 require 'thor/group'
 require 'yaml'
 
-require 'wordmove/net_ssh_openssl_compat'
 require 'wordmove/ssh_runner'
 require 'photocopier'
 
