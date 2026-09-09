@@ -12,7 +12,11 @@ by weLaika, continued through the [kokiddp fork](https://github.com/kokiddp/word
 The movefile format, commands and flags are unchanged. What changed is under the hood, and
 in a few places where the old behaviour was unsafe. See [Upgrading from wordmove 5.x](#upgrading-from-wordmove-5x).
 
-[![Tests](https://github.com/tekgnosis-net/wordmove-ng/actions/workflows/ruby.yml/badge.svg)](https://github.com/tekgnosis-net/wordmove-ng/actions/workflows/ruby.yml)
+**Full documentation: <https://tekgnosis-net.github.io/wordmove-ng/>**
+
+[![Tests](https://github.com/tekgnosis-net/wordmove-ng/actions/workflows/ruby.yml/badge.svg?branch=master)](https://github.com/tekgnosis-net/wordmove-ng/actions/workflows/ruby.yml?query=branch%3Amaster)
+[![Gem](https://img.shields.io/gem/v/wordmove-ng)](https://rubygems.org/gems/wordmove-ng)
+[![Docs](https://img.shields.io/badge/docs-tekgnosis--net.github.io%2Fwordmove--ng-blue)](https://tekgnosis-net.github.io/wordmove-ng/)
 
 ## Highlights
 
@@ -242,12 +246,13 @@ production:
 File sync mirrors the source: files missing on the source are deleted on the destination.
 Put anything you need to keep in `exclude`, which is always relative to `wordpress_path`.
 
-The wiki has the full reference:
-[movefile.yml configurations explained](https://github.com/tekgnosis-net/wordmove-ng/wiki/movefile.yml-configurations-explained),
-[Usage and flags explained](https://github.com/tekgnosis-net/wordmove-ng/wiki/Usage-and-flags-explained),
-[Multiple environments explained](https://github.com/tekgnosis-net/wordmove-ng/wiki/Multiple-environments-explained),
-[Hooks](https://github.com/tekgnosis-net/wordmove-ng/wiki/Hooks).
-Where a wiki page still describes wordmove 5.x behaviour, this README wins.
+The documentation site has the full reference:
+[Configuration](https://tekgnosis-net.github.io/wordmove-ng/configuration/),
+[Usage and flags](https://tekgnosis-net.github.io/wordmove-ng/usage/),
+[Database sync](https://tekgnosis-net.github.io/wordmove-ng/database-sync/),
+[Hooks](https://tekgnosis-net.github.io/wordmove-ng/hooks/),
+[Multiple environments](https://tekgnosis-net.github.io/wordmove-ng/environments/),
+[Troubleshooting](https://tekgnosis-net.github.io/wordmove-ng/troubleshooting/).
 
 ## Logging
 

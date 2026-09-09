@@ -1,0 +1,47 @@
+title: wordmove-ng
+description: Move WordPress sites between environments over SSH, database included.
+url: https://tekgnosis-net.github.io
+baseurl: /wordmove-ng
+repository: tekgnosis-net/wordmove-ng
+
+theme: just-the-docs
+permalink: pretty
+color_scheme: light
+logo: /assets/images/wordmove-ng.png
+favicon_ico: /assets/images/wordmove-ng.png
+search_enabled: true
+heading_anchors: true
+
+aux_links:
+  GitHub: https://github.com/tekgnosis-net/wordmove-ng
+  RubyGems: https://rubygems.org/gems/wordmove-ng
+aux_links_new_tab: true
+
+nav_external_links:
+  - title: Changelog
+    url: https://github.com/tekgnosis-net/wordmove-ng/blob/master/CHANGELOG.md
+
+footer_content: 'Copyright &copy; 2013-2019 weLaika Soc. Coop. (Wordmove), 2026 tekgnosis.net (wordmove-ng). Distributed under the <a href="https://github.com/tekgnosis-net/wordmove-ng/blob/master/LICENSE">MIT license</a>.'
+
+callouts:
+  note:
+    title: Note
+    color: blue
+  warning:
+    title: Warning
+    color: yellow
+  danger:
+    title: Danger
+    color: red
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - README.md
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default

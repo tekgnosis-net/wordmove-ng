@@ -90,6 +90,13 @@ Key pieces:
   `global.collation_fallbacks`, `global.charset_fallbacks`. Add new toggles as movefile keys
   with an env override and document them in README + CHANGELOG in the same commit.
 
+## Docs site
+
+`docs/` is a Jekyll + just-the-docs site published to https://tekgnosis-net.github.io/wordmove-ng/
+by `.github/workflows/pages.yml` on pushes to `master` that touch `docs/`. Internal links use
+`{{ site.baseurl }}/<slug>/` (pretty permalinks). Preview: `cd docs && bundle exec jekyll serve`.
+Update the relevant page in the same commit as any user-facing behaviour change.
+
 ## Conventions worth knowing
 
 - **Commit messages are Conventional Commits** (`feat:`, `fix:`, `feat!:`/`BREAKING CHANGE:`,

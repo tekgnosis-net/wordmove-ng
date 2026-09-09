@@ -19,3 +19,5 @@ test/tmp
 test/version_tmp
 tmp
 .vs/
+docs/_site
+docs/Gemfile.lock

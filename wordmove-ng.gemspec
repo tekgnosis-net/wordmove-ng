@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
     "source_code_uri" => spec.homepage,
     "changelog_uri" => "#{spec.homepage}/blob/master/CHANGELOG.md",
     "bug_tracker_uri" => "#{spec.homepage}/issues",
-    "documentation_uri" => "#{spec.homepage}/wiki",
+    "documentation_uri" => "https://tekgnosis-net.github.io/wordmove-ng/",
     "rubygems_mfa_required" => "true"
   }
 
