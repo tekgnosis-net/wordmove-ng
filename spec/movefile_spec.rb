@@ -18,7 +18,7 @@ describe Wordmove::Movefile do
     before do
       allow(movefile).to receive(:current_dir).and_return(tmpdir)
       allow(movefile).to receive(:logger).and_return(double('logger').as_null_object)
-      File.open(path, 'w') { |f| f.write(yaml) }
+      File.write(path, yaml)
     end
 
     after do
@@ -27,13 +27,13 @@ describe Wordmove::Movefile do
 
     context "when .env is present" do
       before do
-        File.open(dotenv_path, 'w') { |f| f.write(dotenv) }
+        File.write(dotenv_path, dotenv)
       end
 
       it "loads environment variables" do
         movefile.load_dotenv(environment: 'local')
 
-        expect(ENV['OBIWAN']).to eq('KENOBI')
+        expect(ENV.fetch('OBIWAN', nil)).to eq('KENOBI')
       end
     end
   end
@@ -61,7 +61,7 @@ describe Wordmove::Movefile do
 
     context "when Movefile is present" do
       before do
-        File.open(path, 'w') { |f| f.write(yaml) }
+        File.write(path, yaml)
       end
 
       it 'finds a Movefile in current dir' do

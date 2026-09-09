@@ -17,8 +17,8 @@ module Wordmove
 
       if entries.empty?
         if last_dir?(start_dir)
-          raise MovefileNotFound, "Could not find a valid Movefile. Searched"\
-                                  " for filename \"#{name}\" in folder \"#{start_dir}\""
+          raise MovefileNotFound, "Could not find a valid Movefile. Searched " \
+                                  "for filename \"#{name}\" in folder \"#{start_dir}\""
         end
 
         @start_dir = upper_dir(start_dir)
@@ -55,11 +55,9 @@ module Wordmove
           )
         end
 
-        if options[:environment].present?
-          unless available_enviroments.include?(options[:environment].to_sym)
-            raise UndefinedEnvironment, "No environment found for \"#{options[:environment]}\". "\
-                                        "Available Environments: #{available_enviroments.join(' ')}"
-          end
+        if options[:environment].present? && !available_enviroments.include?(options[:environment].to_sym)
+          raise UndefinedEnvironment, "No environment found for \"#{options[:environment]}\". " \
+                                      "Available Environments: #{available_enviroments.join(' ')}"
         end
       end
 

@@ -157,7 +157,7 @@ module Wordmove
       search = positional[0]
       replace = positional[1]
 
-      summary = +"wp search-replace #{search} -> #{replace}"
+      summary = "wp search-replace #{search} -> #{replace}"
       summary << " in #{path}" if path
       summary
     end

@@ -81,8 +81,8 @@ module Wordmove
         gateway = ssh_options[:gateway]
         return unless gateway.is_a?(Hash) && gateway[:password].present?
 
-        logger.warn "\"#{name}\" sets ssh.gateway.password, which cannot be used: the gateway "\
-                    "is reached with `ssh -J`, so it must accept your key or ssh-agent. "\
+        logger.warn "\"#{name}\" sets ssh.gateway.password, which cannot be used: the gateway " \
+                    "is reached with `ssh -J`, so it must accept your key or ssh-agent. " \
                     "The password is ignored."
       end
     end

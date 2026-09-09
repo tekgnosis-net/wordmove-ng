@@ -16,7 +16,7 @@ module Wordmove
                   :local_gzipped_backup_path
 
       def initialize(environment, options)
-        super(environment, options)
+        super
 
         @runner = SshRunner.new(remote_options[:ssh])
         @copier = Photocopier::SSH.new(photocopier_options).tap { |c| c.logger = logger }
@@ -81,20 +81,18 @@ module Wordmove
         return true if missing_local.empty? && missing_remote.empty?
 
         problems = []
-        if missing_local.any?
-          problems << "locally: #{Prerequisites.describe(missing_local)}"
-        end
+        problems << "locally: #{Prerequisites.describe(missing_local)}" if missing_local.any?
         if missing_remote.any?
           problems << "on \"#{environment}\": #{Prerequisites.describe(missing_remote)}"
         end
         raise UnmetPeerDependencyError,
-              "Missing programs required for the database sync (#{problems.join('; ')}). "\
+              "Missing programs required for the database sync (#{problems.join('; ')}). " \
               "Install them, or make sure they are in the login shell $PATH."
       end
 
       def warn_about_prefix_collisions
         Wordmove::Movefile.new(options[:config]).prefix_collisions(environment).each do |short, long|
-          logger.warn "\"#{short}\" is a prefix of \"#{long}\": the search-replace of the "\
+          logger.warn "\"#{short}\" is a prefix of \"#{long}\": the search-replace of the " \
                       "shorter value will also rewrite the longer one. Check the result."
         end
       end
@@ -146,12 +144,13 @@ module Wordmove
         begin
           yield
         ensure
-          runner.call(SqlAdapter::Wpcli.maintenance_mode_command(:deactivate, side[:wordpress_path]))
+          runner.call(SqlAdapter::Wpcli.maintenance_mode_command(:deactivate,
+                                                                 side[:wordpress_path]))
         end
       end
 
       def maintenance_mode?
-        env = ENV['WORDMOVE_MAINTENANCE_MODE']
+        env = ENV.fetch('WORDMOVE_MAINTENANCE_MODE', nil)
         return %w[1 true yes on].include?(env.strip.downcase) unless env.nil? || env.strip.empty?
 
         options.dig(:global, :maintenance_mode) == true
@@ -307,7 +306,7 @@ module Wordmove
                   array << path
                 end
                 .concat(paths_to_exclude)
-                .concat(['/*'])
+                .push('/*')
       end
 
       def pull_include_paths(task)
@@ -333,7 +332,7 @@ module Wordmove
                   array << path
                 end
                 .concat(paths_to_exclude)
-                .concat(['/*'])
+                .push('/*')
       end
     end
   end

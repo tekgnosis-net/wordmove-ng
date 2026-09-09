@@ -14,22 +14,24 @@ feature work.
 
 ```bash
 bundle install                      # deps (Gemfile.lock is gitignored)
-bundle exec rake                    # default task = full RSpec suite
-bundle exec rake spec               # what CI runs
+bundle exec rake                    # default task = RSpec suite + rubocop (what CI runs)
+bundle exec rake spec               # specs only
 bundle exec rspec spec/movefile_spec.rb            # one file
 bundle exec rspec spec/movefile_spec.rb:42         # one example by line
 bundle exec rspec -e "some example description"    # by description
-bundle exec rake rubocop            # lint (rubocop 0.76 pinned; .rubocop.yml targets Ruby 2.6)
+bundle exec rake rubocop            # lint (rubocop 1.x, NewCops enabled; backlog lives in .rubocop_todo.yml)
 bin/wordmove --version              # run the CLI from source without installing
 rake install                        # build + install the gem locally
 ```
 
 - `.rspec` already sets `--require spec_helper --color`; documentation formatter and
   SimpleCov are enabled in `spec/spec_helper.rb`.
-- CI (`.github/workflows/tests.yml`) runs `bundle exec rake spec` on Ruby 2.6 through 4.0.
-  Code must stay valid on Ruby 2.6 syntax **and** run on Ruby 4 (see the stdlib shims in
-  `lib/wordmove.rb` and `net_ssh_openssl_compat.rb`, and the explicit `ostruct`/`base64`/
-  `mutex_m`/`logger` runtime deps in the gemspec). Local `.ruby-version` is 3.4.9.
+- CI (`.github/workflows/ruby.yml`) runs `bundle exec rake` on Ruby 3.0 through 4.0. Code must
+  run on Ruby 3.0 **and** Ruby 4 (see the `StringScanner#peep` shim in `lib/wordmove.rb` and the
+  explicit `ostruct`/`base64`/`mutex_m`/`logger` runtime deps in the gemspec). Local
+  `.ruby-version` is 3.4.9. Dev dependencies live in the Gemfile, not the gemspec.
+- Fix new rubocop offences rather than adding to `.rubocop_todo.yml`; the todo file only
+  grandfathers the pre-6.0 backlog.
 - `pry-byebug` is loaded optionally in specs; a `LoadError` there is tolerated.
 
 ## Architecture (request flow)

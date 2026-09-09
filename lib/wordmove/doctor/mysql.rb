@@ -8,7 +8,7 @@ module Wordmove
         begin
           @config = Wordmove::Movefile.new(movefile_name, movefile_dir).fetch[:local][:database]
         rescue Psych::SyntaxError
-          return
+          nil
         end
       end
 

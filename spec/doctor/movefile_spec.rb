@@ -26,7 +26,7 @@ describe Wordmove::Doctor::Movefile do
 
       it "reports each collision as an error" do
         expect { doctor.validate! }
-          .to output(/"https:\/\/site\.test" is a prefix of "https:\/\/site\.test\.example\.com"/)
+          .to output(%r{"https://site\.test" is a prefix of "https://site\.test\.example\.com"})
           .to_stdout_from_any_process
       end
     end

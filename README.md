@@ -20,7 +20,7 @@ This fork keeps Wordmove usable on current Ruby, OpenSSL, MariaDB, and Docker-ba
 
 - Ruby compatibility:
   - The repo default Ruby is now `3.4.9`.
-  - The GitHub Actions matrix now tests `2.6`, `2.7`, `3.0`, `3.1`, `3.2`, `3.3`, `3.4`, and `4.0`.
+  - Ruby 3.0 is the minimum; the GitHub Actions matrix tests `3.0` through `4.0` and runs rubocop.
   - Runtime dependencies were updated for modern Ruby packaging and stdlib extraction: `thor`, `base64`, `bigdecimal`, `mutex_m`, `ed25519`, and `bcrypt_pbkdf`.
   - `Movefile` YAML loading now works across older and newer Psych versions.
   - `bin/console` now falls back to `irb` when `pry` is unavailable on newer Rubies.
@@ -71,8 +71,8 @@ bundle exec exe/wordmove --help
 ## Supported Ruby Versions
 
 - Local default in this repository: `3.4.9`
-- CI coverage: `2.6`, `2.7`, `3.0`, `3.1`, `3.2`, `3.3`, `3.4`, `4.0`
-- Minimum declared Ruby version in the gemspec: `2.6.0`
+- CI coverage: `3.0`, `3.1`, `3.2`, `3.3`, `3.4`, `4.0`
+- Minimum declared Ruby version in the gemspec: `3.0.0`
 
 ## Peer Dependencies
 
@@ -317,10 +317,8 @@ Where this README and the upstream wiki disagree, this README describes the beha
 bundle exec rspec
 ```
 
-The project CI currently runs the suite across:
+The project CI runs the suite and rubocop across:
 
-- `2.6`
-- `2.7`
 - `3.0`
 - `3.1`
 - `3.2`

@@ -40,7 +40,7 @@ module Wordmove
           return content if socket.to_s.empty?
 
           content.sub(
-            /^(\s*)# socket: \/path\/to\/mysql\.sock # optional unix socket path$/,
+            %r{^(\s*)# socket: /path/to/mysql\.sock # optional unix socket path$},
             "\\1socket: #{socket.inspect} # optional unix socket path"
           )
         end

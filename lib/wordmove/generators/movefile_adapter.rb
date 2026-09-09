@@ -173,7 +173,7 @@ module Wordmove
       def normalize_host_config(config)
         host = config[:host].to_s
 
-        if host.match(/\A(?<hostname>[^:]+):(?<socket>\/.+)\z/)
+        if host.match(%r{\A(?<hostname>[^:]+):(?<socket>/.+)\z})
           config[:host] = Regexp.last_match[:hostname]
           config[:socket] = Regexp.last_match[:socket]
         elsif host.match(/\A(?<hostname>[^:]+):(?<port>\d+)\z/)

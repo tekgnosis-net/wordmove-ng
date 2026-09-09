@@ -15,7 +15,7 @@ describe Wordmove::Doctor::Rsync do
   context "when GNU rsync is installed" do
     before do
       allow(doctor).to receive(:`).with("rsync --version | head -n1 2>&1")
-        .and_return("rsync 3.2.7  protocol version 31\n")
+                                  .and_return("rsync 3.2.7  protocol version 31\n")
     end
 
     it "logs the detected version" do
@@ -28,7 +28,7 @@ describe Wordmove::Doctor::Rsync do
   context "when openrsync is installed" do
     before do
       allow(doctor).to receive(:`).with("rsync --version | head -n1 2>&1")
-        .and_return("openrsync: protocol version 29\n")
+                                  .and_return("openrsync: protocol version 29\n")
     end
 
     it "logs the detected protocol version" do
@@ -41,7 +41,7 @@ describe Wordmove::Doctor::Rsync do
   context "when rsync is missing" do
     before do
       allow(doctor).to receive(:`).with("rsync --version | head -n1 2>&1")
-        .and_return("command not found: rsync\n")
+                                  .and_return("command not found: rsync\n")
     end
 
     it "logs an error" do

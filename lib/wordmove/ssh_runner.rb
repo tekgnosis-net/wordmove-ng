@@ -62,7 +62,7 @@ module Wordmove
     rescue Errno::ENOENT
       binary = argv.first
       raise UnmetPeerDependencyError,
-            "`#{binary}` is not installed or not in your $PATH; it is required for SSH "\
+            "`#{binary}` is not installed or not in your $PATH; it is required for SSH " \
             "database operations and remote hooks"
     end
 
@@ -78,8 +78,8 @@ module Wordmove
 
     def common_arguments
       arguments = []
-      arguments.concat(%w[-o BatchMode=yes]) unless password?
-      arguments.concat(['-J', jump_host]) if gateway?
+      arguments.push("-o", "BatchMode=yes") unless password?
+      arguments.push('-J', jump_host) if gateway?
       arguments
     end
 

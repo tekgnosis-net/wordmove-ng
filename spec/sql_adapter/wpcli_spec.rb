@@ -42,8 +42,8 @@ describe Wordmove::SqlAdapter::Wpcli do
 
       it "returns the right command as a string" do
         expect(adapter.command)
-          .to eq("wp search-replace --path=/path/to/steak sausage bacon --quiet "\
-                "--skip-columns=guid --all-tables --allow-root")
+          .to eq("wp search-replace --path=/path/to/steak sausage bacon --quiet " \
+                 "--skip-columns=guid --all-tables --allow-root")
       end
     end
 
@@ -52,13 +52,13 @@ describe Wordmove::SqlAdapter::Wpcli do
         allow(adapter)
           .to receive(:`)
           .with('wp cli param-dump --allow-root --with-values')
-          .and_return("{\"path\":{\"current\":\"\/path\/to\/pudding\"}}")
+          .and_return("{\"path\":{\"current\":\"/path/to/pudding\"}}")
       end
       context "but still reachable by wp-cli" do
         it "returns the right command as a string" do
           expect(adapter.command)
-            .to eq("wp search-replace --path=/path/to/pudding sausage bacon --quiet "\
-                  "--skip-columns=guid --all-tables --allow-root")
+            .to eq("wp search-replace --path=/path/to/pudding sausage bacon --quiet " \
+                   "--skip-columns=guid --all-tables --allow-root")
         end
       end
     end
@@ -67,7 +67,7 @@ describe Wordmove::SqlAdapter::Wpcli do
       it "returns the right command with '--path' flag set to local_path" do
         allow(adapter).to receive(:`).with('wp cli param-dump --allow-root --with-values').and_return("{}")
         expect(adapter.command)
-          .to eq("wp search-replace --path=/path/to/ham sausage bacon --quiet "\
+          .to eq("wp search-replace --path=/path/to/ham sausage bacon --quiet " \
                  "--skip-columns=guid --all-tables --allow-root")
       end
     end

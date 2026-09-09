@@ -12,9 +12,9 @@ module Wordmove
           @contents = movefile.fetch
           @root_keys = contents.keys
         rescue Psych::SyntaxError
-          movefile.logger.error "Your movefile is not parsable due to a syntax error"\
+          movefile.logger.error "Your movefile is not parsable due to a syntax error" \
                                 "so we can't continue to validate it."
-          movefile.logger.debug "You could try to use https://yamlvalidator.com/ to"\
+          movefile.logger.debug "You could try to use https://yamlvalidator.com/ to" \
                                 "get a clue about the problem."
         end
       end
@@ -47,7 +47,7 @@ module Wordmove
 
         errors = validator.validate(contents[key].deep_stringify_keys)
 
-        if errors&.empty?
+        if errors && errors.empty?
           movefile.logger.success "Formal validation passed"
 
           return true
@@ -77,15 +77,15 @@ module Wordmove
 
       def validate_prefix_collisions(key)
         movefile.prefix_collisions(key).each do |short, long|
-          movefile.logger.error "\"#{short}\" is a prefix of \"#{long}\": wp search-replace "\
-                                "would rewrite the longer value too. Use distinct vhosts "\
+          movefile.logger.error "\"#{short}\" is a prefix of \"#{long}\": wp search-replace " \
+                                "would rewrite the longer value too. Use distinct vhosts " \
                                 "and wordpress_paths for local and #{key}."
         end
       end
 
       def validate_protocol_presence(keys)
         if keys.include?(:ftp)
-          movefile.logger.error "This remote is configured with `ftp`, but FTP support was "\
+          movefile.logger.error "This remote is configured with `ftp`, but FTP support was " \
                                 "removed in wordmove-ng 6.0. Switch it to `ssh`."
           return false
         end

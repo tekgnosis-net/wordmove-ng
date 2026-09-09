@@ -15,7 +15,7 @@ end
 
 require "wordmove"
 
-Dir[File.expand_path("support/**/*.rb", __dir__)].sort.each { |f| require f }
+Dir[File.expand_path("support/**/*.rb", __dir__)].each { |f| require f }
 
 # I don't know from where this method was imported,
 # but since last updates it was lost. I looked about
@@ -25,7 +25,7 @@ Dir[File.expand_path("support/**/*.rb", __dir__)].sort.each { |f| require f }
 # @see https://github.com/rails/rails/commit/481e49c64f790e46f4aff3ed539ed227d2eb46cb
 def silence_stream(stream)
   old_stream = stream.dup
-  stream.reopen(RbConfig::CONFIG['host_os'].match?(/mswin|mingw/) ? 'NUL:' : '/dev/null')
+  stream.reopen(RbConfig::CONFIG['host_os'].match?(/mswin|mingw/) ? File::NULL : File::NULL)
   stream.sync = true
   yield
 ensure

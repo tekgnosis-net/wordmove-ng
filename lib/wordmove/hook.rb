@@ -10,7 +10,7 @@ module Wordmove
       end
     end
 
-    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable-next Metrics/MethodLength
     def self.run(action, step, cli_options)
       movefile = Wordmove::Movefile.new(cli_options[:config])
       options = movefile.fetch(false)
@@ -38,7 +38,6 @@ module Wordmove
         end
       end
     end
-    # rubocop:enable Metrics/MethodLength
 
     Config = Struct.new(:options, :action, :step) do
       def empty?

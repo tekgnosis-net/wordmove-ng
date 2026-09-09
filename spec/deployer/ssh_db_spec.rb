@@ -16,15 +16,15 @@ describe Wordmove::Deployer::SSH, 'database sync' do
     allow(copier).to receive(:logger=)
     allow(Photocopier::SSH).to receive(:new).and_return(copier)
     allow(Wordmove::SshRunner).to receive(:new).and_return(runner)
-    allow(runner).to receive(:run) { |cmd| calls << [:remote, cmd] && ['', '', 0] }
-    allow(runner).to receive(:get) { |*args| calls << [:get, *args] && ['', '', 0] }
-    allow(runner).to receive(:put) { |*args| calls << [:put, *args] && ['', '', 0] }
-    allow(runner).to receive(:delete) { |*args| calls << [:delete, *args] && ['', '', 0] }
-    allow(deployer).to receive(:system) { |cmd| calls << [:local, cmd] && true }
+    allow(runner).to receive(:run) { |cmd| (calls << [:remote, cmd]) && ['', '', 0] }
+    allow(runner).to receive(:get) { |*args| (calls << [:get, *args]) && ['', '', 0] }
+    allow(runner).to receive(:put) { |*args| (calls << [:put, *args]) && ['', '', 0] }
+    allow(runner).to receive(:delete) { |*args| (calls << [:delete, *args]) && ['', '', 0] }
+    allow(deployer).to receive(:system) { |cmd| (calls << [:local, cmd]) && true }
     allow(deployer).to receive(:local_delete) { |path| calls << [:local_delete, path] }
     allow(deployer).to receive(:normalize_collations!) { |path| calls << [:normalize, path] }
     allow(Wordmove::Prerequisites).to receive(:missing_locally).and_return([])
-    allow(Wordmove::Prerequisites).to receive(:missing_remotely) do |r, reqs|
+    allow(Wordmove::Prerequisites).to receive(:missing_remotely) do |_r, reqs|
       calls << [:remote_probe, reqs]
       []
     end
@@ -162,7 +162,7 @@ describe Wordmove::Deployer::SSH, 'database sync' do
 
     context "with WORDMOVE_MAINTENANCE_MODE=1 in the environment" do
       around do |example|
-        previous = ENV['WORDMOVE_MAINTENANCE_MODE']
+        previous = ENV.fetch('WORDMOVE_MAINTENANCE_MODE', nil)
         ENV['WORDMOVE_MAINTENANCE_MODE'] = '1'
         example.run
       ensure

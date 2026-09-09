@@ -20,7 +20,7 @@ describe Wordmove::Logger do
                 '--host=localhost --user=root --password=secret --result-file=./wp-content/dump.sql my_db'
 
       expect { logger.task_step(true, command) }
-        .to output(/dump database my_db to \.\/wp-content\/dump\.sql/)
+        .to output(%r{dump database my_db to \./wp-content/dump\.sql})
         .to_stdout_from_any_process
     end
 
@@ -29,7 +29,7 @@ describe Wordmove::Logger do
                 '--quiet --skip-columns=guid --all-tables --allow-root'
 
       expect { logger.task_step(true, command) }
-        .to output(/wp search-replace old\.example\.test -> new\.example\.test in \.\/public/)
+        .to output(%r{wp search-replace old\.example\.test -> new\.example\.test in \./public})
         .to_stdout_from_any_process
     end
 
@@ -61,7 +61,7 @@ describe Wordmove::Logger do
       ].join("\n")
 
       expect { logger.task_step(true, command) }
-        .to output(/import SQL dump \.\/wp-content\/dump\.sql into database local \(strip sandbox header, append COMMIT\)/)
+        .to output(%r{import SQL dump \./wp-content/dump\.sql into database local \(strip sandbox header, append COMMIT\)})
         .to_stdout_from_any_process
     end
   end

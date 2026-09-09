@@ -4,9 +4,8 @@ require 'fileutils'
 module Wordmove
   module Deployer
     class Base
-      attr_reader :options
-      attr_reader :logger
-      attr_reader :environment
+      attr_reader :options, :logger, :environment
+
       SANDBOX_MAGIC_COMMENT = '/*!999999- enable the sandbox mode */'.freeze
 
       class << self
@@ -23,8 +22,8 @@ module Wordmove
 
           if options[environment][:ftp]
             raise NoAdapterFound,
-                  "FTP support was removed in wordmove-ng 6.0, but the \"#{environment}\" "\
-                  "environment is configured with an `ftp` block. Switch it to `ssh`, or "\
+                  "FTP support was removed in wordmove-ng 6.0, but the \"#{environment}\" " \
+                  "environment is configured with an `ftp` block. Switch it to `ssh`, or " \
                   "keep using the legacy `wordmove` 5.x gem for FTP-only hosts."
           end
 
@@ -42,7 +41,7 @@ module Wordmove
           return if adapter.nil? || adapter.to_s == 'wpcli'
 
           logger(movefile.secrets).warn(
-            "`global.sql_adapter: #{adapter}` is ignored since wordmove-ng 6.0; database "\
+            "`global.sql_adapter: #{adapter}` is ignored since wordmove-ng 6.0; database " \
             "adaptation always uses wp-cli on the target. Remove the key from your movefile."
           )
         end
@@ -163,7 +162,7 @@ module Wordmove
         [
           "first_line=$(head -n 1 #{escaped_dump_path} 2>/dev/null || true)",
           'tmp_dump="$(mktemp)"',
-          %{if [ "$first_line" = '#{SANDBOX_MAGIC_COMMENT}' ]; then},
+          %(if [ "$first_line" = '#{SANDBOX_MAGIC_COMMENT}' ]; then),
           "tail -n +2 #{escaped_dump_path} > \"$tmp_dump\"",
           'else',
           "cat #{escaped_dump_path} > \"$tmp_dump\"",
@@ -224,8 +223,8 @@ module Wordmove
         end
         command << "--database=#{Shellwords.escape(options[:name])}"
         command << "--force" if import
-        unless mysql_options.to_s.match?(/--(?:skip-)?binary-mode\b/)
-          command << "--binary-mode" if import
+        if !mysql_options.to_s.match?(/--(?:skip-)?binary-mode\b/) && import
+          command << "--binary-mode"
         end
         command << Shellwords.split(mysql_options) if mysql_options.present?
         command.join(" ")

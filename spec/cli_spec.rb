@@ -64,7 +64,7 @@ describe Wordmove::CLI do
 
       before do
         allow(Wordmove::Deployer::Base).to receive(:deployer_for).with(options)
-          .and_raise(Wordmove::MovefileNotFound, "Could not find a valid Movefile.")
+                                                                 .and_raise(Wordmove::MovefileNotFound, "Could not find a valid Movefile.")
       end
 
       it "it rescues from a MovefileNotFound exception" do
@@ -141,7 +141,7 @@ describe Wordmove::CLI do
 
       before do
         allow(Wordmove::Deployer::Base).to receive(:deployer_for).with(options)
-          .and_raise(Wordmove::MovefileNotFound, "Could not find a valid Movefile.")
+                                                                 .and_raise(Wordmove::MovefileNotFound, "Could not find a valid Movefile.")
       end
 
       it "it rescues from a MovefileNotFound exception" do

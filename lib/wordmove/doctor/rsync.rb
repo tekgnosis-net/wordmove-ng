@@ -18,7 +18,7 @@ module Wordmove
         elsif (match = /\d+\.\d+\.\d+/.match(version_output))
           logger.success "rsync is installed at version #{match[0]}"
         else
-          logger.error "rsync not found or the version could not be detected. "\
+          logger.error "rsync not found or the version could not be detected. " \
                        "Output was: #{version_output.strip}"
         end
       end

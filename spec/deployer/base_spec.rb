@@ -142,9 +142,9 @@ describe Wordmove::Deployer::Base do
         "cat ./my\\ dump.sql > \"$tmp_dump\"",
         "fi",
         "printf \"\\\\nCOMMIT;\\\\n\" >> \"$tmp_dump\"",
-        "$(command -v mariadb >/dev/null 2>&1 && echo mariadb || echo mysql) --host=localhost "\
-          "--port=8888 --user=root --password=\\'\\\"\\$ciao --database=database_name --force --binary-mode --protocol=TCP "\
-          "--init-command=\"SET autocommit=0; SET FOREIGN_KEY_CHECKS=0\" < \"$tmp_dump\"",
+        "$(command -v mariadb >/dev/null 2>&1 && echo mariadb || echo mysql) --host=localhost " \
+        "--port=8888 --user=root --password=\\'\\\"\\$ciao --database=database_name --force --binary-mode --protocol=TCP " \
+        "--init-command=\"SET autocommit=0; SET FOREIGN_KEY_CHECKS=0\" < \"$tmp_dump\"",
         "import_status=$?",
         "rm -f \"$tmp_dump\"",
         "exit $import_status"
@@ -166,7 +166,7 @@ describe Wordmove::Deployer::Base do
       )
 
       expect(command).to include("--skip-binary-mode")
-      expect(command.scan(/binary-mode/).size).to eq(1)
+      expect(command.scan('binary-mode').size).to eq(1)
     end
 
     it "adds socket from the dedicated socket option" do
