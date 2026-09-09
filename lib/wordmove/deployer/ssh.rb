@@ -66,15 +66,29 @@ module Wordmove
       # Both checks run before any backup or dump so a missing dependency has
       # no side effects.
       def check_push_db_prerequisites!
-        remote_wp_in_path!
+        check_prerequisites!(local: Prerequisites::DB_SOURCE, remote: Prerequisites::DB_TARGET)
       end
 
       def check_pull_db_prerequisites!
-        return true if wp_in_path?
+        check_prerequisites!(local: Prerequisites::DB_TARGET, remote: Prerequisites::DB_SOURCE)
+      end
 
+      def check_prerequisites!(local:, remote:)
+        logger.task_step true, "checking prerequisites"
+        missing_local = Prerequisites.missing_locally(local)
+        missing_remote = Prerequisites.missing_remotely(@runner, remote)
+        return true if missing_local.empty? && missing_remote.empty?
+
+        problems = []
+        if missing_local.any?
+          problems << "locally: #{Prerequisites.describe(missing_local)}"
+        end
+        if missing_remote.any?
+          problems << "on \"#{environment}\": #{Prerequisites.describe(missing_remote)}"
+        end
         raise UnmetPeerDependencyError,
-              "WP-CLI is not installed locally or not in your $PATH. It is required "\
-              "to adapt the database after import."
+              "Missing programs required for the database sync (#{problems.join('; ')}). "\
+              "Install them, or make sure they are in the login shell $PATH."
       end
 
       def backup_remote_db!
@@ -120,10 +134,6 @@ module Wordmove
                      "A backup of the remote database taken before the import is at: " \
                      "#{local_gzipped_backup_path}"
         raise
-      end
-
-      def wp_in_path?
-        system('which wp > /dev/null 2>&1')
       end
 
       def wpcli_search_replace(from, to, config_key, path:, remote:)
@@ -195,15 +205,6 @@ module Wordmove
           ShellCommandError,
           "Error code #{exit_code} returned by command \"#{description}\": #{stderr}"
         )
-      end
-
-      def remote_wp_in_path!
-        _stdout, _stderr, exit_code = @runner.run('command -v wp')
-        return true if exit_code.zero?
-
-        raise UnmetPeerDependencyError,
-              "WP-CLI is not installed on the \"#{environment}\" host (or not in the "\
-              "login shell $PATH). It is required there to adapt the database after import."
       end
 
       def download_remote_db(local_gizipped_dump_path)

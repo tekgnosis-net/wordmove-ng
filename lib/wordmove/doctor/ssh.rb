@@ -40,11 +40,13 @@ module Wordmove
 
       def check_environment!(name, ssh_options)
         logger.task "Checking SSH connection to \"#{name}\""
+        warn_about_gateway_password(name, ssh_options)
         runner = Wordmove::SshRunner.new(ssh_options)
         _stdout, stderr, exit_code = runner.run('true')
 
         if exit_code.zero?
           logger.success "Non interactive SSH authentication to \"#{name}\" works"
+          check_remote_prerequisites!(name, runner)
         else
           logger.error <<-LONG
   Non interactive SSH authentication to "#{name}" failed (exit code #{exit_code}).
@@ -57,6 +59,31 @@ module Wordmove
         end
       rescue UnmetPeerDependencyError => e
         logger.error e.message
+      end
+
+      def check_remote_prerequisites!(name, runner)
+        missing = Wordmove::Prerequisites.missing_remotely(runner, Wordmove::Prerequisites::REMOTE_ALL)
+        if missing.empty?
+          logger.success "All required programs are available on \"#{name}\""
+        else
+          logger.error <<-LONG
+  Missing on "#{name}": #{Wordmove::Prerequisites.describe(missing)}.
+                rsync is needed for file sync; gzip, mysql/mariadb, mysqldump/mariadb-dump
+                and wp for database sync (wp runs search-replace on the remote after a push).
+                Programs must be in the PATH of a non interactive login shell.
+          LONG
+        end
+      rescue ShellCommandError => e
+        logger.error e.message
+      end
+
+      def warn_about_gateway_password(name, ssh_options)
+        gateway = ssh_options[:gateway]
+        return unless gateway.is_a?(Hash) && gateway[:password].present?
+
+        logger.warn "\"#{name}\" sets ssh.gateway.password, which cannot be used: the gateway "\
+                    "is reached with `ssh -J`, so it must accept your key or ssh-agent. "\
+                    "The password is ignored."
       end
     end
   end

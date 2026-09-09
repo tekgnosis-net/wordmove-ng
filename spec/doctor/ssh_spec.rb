@@ -1,6 +1,6 @@
 describe Wordmove::Doctor::Ssh do
   let(:doctor) { described_class.new(movefile_path_for('multi_environments')) }
-  let(:logger) { double("logger", task: nil, success: nil, error: nil) }
+  let(:logger) { double("logger", task: nil, success: nil, error: nil, warn: nil) }
   let(:runner) { instance_double(Wordmove::SshRunner, ssh_argv: %w[ssh user@host]) }
 
   before do
@@ -8,6 +8,7 @@ describe Wordmove::Doctor::Ssh do
     allow(Logger).to receive(:new).and_return(logger)
     allow(doctor).to receive(:system).with('which ssh', any_args).and_return(true)
     allow(Wordmove::SshRunner).to receive(:new).and_return(runner)
+    allow(Wordmove::Prerequisites).to receive(:missing_remotely).and_return([])
   end
 
   context ".new" do
@@ -26,6 +27,33 @@ describe Wordmove::Doctor::Ssh do
         .with(hash_including(host: 'production.mysite.example.com')).once
       expect(logger).to have_received(:success)
         .with(/authentication to "staging" works/)
+    end
+
+    it "probes remote prerequisites once authentication works" do
+      allow(runner).to receive(:run).with('true').and_return(['', '', 0])
+      allow(Wordmove::Prerequisites).to receive(:missing_remotely)
+        .and_return([['wp'], %w[mysqldump mariadb-dump]])
+      doctor.check!
+      expect(Wordmove::Prerequisites).to have_received(:missing_remotely)
+        .with(runner, Wordmove::Prerequisites::REMOTE_ALL).twice
+      expect(logger).to have_received(:error)
+        .with(/Missing on "staging": wp, mysqldump or mariadb-dump/)
+    end
+
+    it "does not probe prerequisites when authentication fails" do
+      allow(runner).to receive(:run).with('true').and_return(['', 'nope', 255])
+      doctor.check!
+      expect(Wordmove::Prerequisites).not_to have_received(:missing_remotely)
+    end
+
+    context "with a gateway password" do
+      let(:doctor) { described_class.new(movefile_path_for('with_gateway_password')) }
+
+      it "warns that gateway passwords are ignored" do
+        allow(runner).to receive(:run).with('true').and_return(['', '', 0])
+        doctor.check!
+        expect(logger).to have_received(:warn).with(/gateway\.password.*ignored/m)
+      end
     end
 
     it "reports the failing command and stderr when authentication fails" do

@@ -46,10 +46,25 @@ describe Wordmove::SshRunner do
   end
 
   context "#run" do
-    it "executes the command through ssh and returns stdout, stderr and the exit code" do
+    it "executes the command through ssh in a POSIX sh and returns stdout, stderr, exit code" do
       expect(runner.run('ls -la')).to eq(['out', '', 0])
       expect(Open3).to have_received(:capture3).with(
-        'ssh', '-o', 'BatchMode=yes', 'deploy@staging.example.com', 'ls -la'
+        'ssh', '-o', 'BatchMode=yes', 'deploy@staging.example.com', "sh -c 'ls -la'"
+      )
+    end
+
+    it "quotes single quotes inside the command for the sh wrapper" do
+      runner.run(%q(echo 'it''s' && printf "%s\n" "$HOME"))
+      expect(Open3).to have_received(:capture3).with(
+        'ssh', '-o', 'BatchMode=yes', 'deploy@staging.example.com',
+        %q(sh -c 'echo '\''it'\'''\''s'\'' && printf "%s\n" "$HOME"')
+      )
+    end
+
+    it "keeps multi-line scripts intact" do
+      runner.run("a=1\necho $a")
+      expect(Open3).to have_received(:capture3).with(
+        'ssh', '-o', 'BatchMode=yes', 'deploy@staging.example.com', "sh -c 'a=1\necho $a'"
       )
     end
 
@@ -109,7 +124,7 @@ describe Wordmove::SshRunner do
       runner.delete('/var/www/My Site/dump.sql')
       expect(Open3).to have_received(:capture3).with(
         'ssh', '-o', 'BatchMode=yes', 'deploy@staging.example.com',
-        'rm -rf /var/www/My\\ Site/dump.sql'
+        "sh -c 'rm -rf /var/www/My\\ Site/dump.sql'"
       )
     end
   end

@@ -23,7 +23,11 @@ describe Wordmove::Deployer::SSH, 'database sync' do
     allow(deployer).to receive(:system) { |cmd| calls << [:local, cmd] && true }
     allow(deployer).to receive(:local_delete) { |path| calls << [:local_delete, path] }
     allow(deployer).to receive(:normalize_collations!) { |path| calls << [:normalize, path] }
-    allow(deployer).to receive(:wp_in_path?).and_return(true)
+    allow(Wordmove::Prerequisites).to receive(:missing_locally).and_return([])
+    allow(Wordmove::Prerequisites).to receive(:missing_remotely) do |r, reqs|
+      calls << [:remote_probe, reqs]
+      []
+    end
     allow_any_instance_of(Wordmove::SqlAdapter::Wpcli).to receive(:load_from_cli).and_return(nil)
     allow_any_instance_of(Wordmove::SqlAdapter::Wpcli).to receive(:wp_in_path?).and_return(true)
   end
@@ -42,18 +46,29 @@ describe Wordmove::Deployer::SSH, 'database sync' do
       expect(local_commands.grep(/wp search-replace/)).to be_empty
     end
 
-    it "checks for wp-cli on the remote before touching any database" do
+    it "probes the remote for the target prerequisites before touching any database" do
       silence_stream(STDOUT) { deployer.send(:push_db) }
-      expect(remote_commands.first).to eq('command -v wp')
+      expect(calls.first).to eq([:remote_probe, Wordmove::Prerequisites::DB_TARGET])
     end
 
     it "aborts without side effects when wp-cli is missing on the remote" do
-      allow(runner).to receive(:run).with('command -v wp').and_return(['', '', 1])
+      allow(Wordmove::Prerequisites).to receive(:missing_remotely).and_return([['wp']])
       silence_stream(STDOUT) do
-        expect { deployer.send(:push_db) }.to raise_error(Wordmove::UnmetPeerDependencyError)
+        expect { deployer.send(:push_db) }
+          .to raise_error(Wordmove::UnmetPeerDependencyError, /on "staging": wp/)
       end
       expect(local_commands).to be_empty
-      expect(calls.map(&:first)).not_to include(:get, :put)
+      expect(calls.map(&:first)).not_to include(:get, :put, :remote)
+    end
+
+    it "aborts when mysqldump is missing locally" do
+      allow(Wordmove::Prerequisites).to receive(:missing_locally)
+        .and_return([%w[mysqldump mariadb-dump]])
+      silence_stream(STDOUT) do
+        expect { deployer.send(:push_db) }
+          .to raise_error(Wordmove::UnmetPeerDependencyError, /locally: mysqldump or mariadb-dump/)
+      end
+      expect(local_commands).to be_empty
     end
 
     it "backs up the remote, dumps local once, imports remotely, then adapts remotely" do
@@ -114,12 +129,18 @@ describe Wordmove::Deployer::SSH, 'database sync' do
 
   describe "#pull_db" do
     it "checks for local wp-cli before touching any database" do
-      allow(deployer).to receive(:wp_in_path?).and_return(false)
+      allow(Wordmove::Prerequisites).to receive(:missing_locally).and_return([['wp']])
       silence_stream(STDOUT) do
-        expect { deployer.send(:pull_db) }.to raise_error(Wordmove::UnmetPeerDependencyError)
+        expect { deployer.send(:pull_db) }
+          .to raise_error(Wordmove::UnmetPeerDependencyError, /locally: wp/)
       end
       expect(local_commands).to be_empty
       expect(remote_commands).to be_empty
+    end
+
+    it "probes the remote for the source prerequisites" do
+      silence_stream(STDOUT) { deployer.send(:pull_db) }
+      expect(calls.first).to eq([:remote_probe, Wordmove::Prerequisites::DB_SOURCE])
     end
 
     it "imports locally then adapts locally" do

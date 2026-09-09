@@ -96,19 +96,4 @@ describe Wordmove::Deployer::SSH do
       end
     end
   end
-
-  context "#remote_wp_in_path!" do
-    it "passes silently when wp is available on the remote" do
-      allow(runner).to receive(:run).with('command -v wp').and_return(['/usr/bin/wp', '', 0])
-      silence_stream(STDOUT) { expect { deployer.send(:remote_wp_in_path!) }.not_to raise_error }
-    end
-
-    it "raises UnmetPeerDependencyError naming the environment when wp is missing" do
-      allow(runner).to receive(:run).with('command -v wp').and_return(['', '', 1])
-      silence_stream(STDOUT) do
-        expect { deployer.send(:remote_wp_in_path!) }
-          .to raise_error(Wordmove::UnmetPeerDependencyError, /staging/)
-      end
-    end
-  end
 end

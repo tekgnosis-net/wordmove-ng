@@ -1,14 +1,10 @@
 describe Wordmove::Doctor::Wpcli do
-  let(:movefile) { movefile_path_for('multi_environments') }
-  subject(:doctor) { described_class.new(movefile) }
+  subject(:doctor) { described_class.new }
   let(:logger) { double("logger", task: nil, success: nil, error: nil) }
-  let(:runner) { instance_double(Wordmove::SshRunner) }
 
   before do
     allow(logger).to receive(:level=)
     allow(Logger).to receive(:new).and_return(logger)
-    allow(Wordmove::SshRunner).to receive(:new).and_return(runner)
-    allow(runner).to receive(:run).with('command -v wp').and_return(['/usr/bin/wp', '', 0])
   end
 
   it "responds to #check!" do
@@ -28,20 +24,14 @@ describe Wordmove::Doctor::Wpcli do
       expect(logger).to have_received(:success).with("wp-cli is correctly installed")
       expect(logger).to have_received(:success).with("wp-cli is up to date")
     end
+  end
 
-    it "checks wp-cli on every ssh remote" do
-      doctor.check!
-      expect(Wordmove::SshRunner).to have_received(:new)
-        .with(hash_including(host: 'staging.mysite.example.com')).once
-      expect(Wordmove::SshRunner).to have_received(:new)
-        .with(hash_including(host: 'production.mysite.example.com')).once
-      expect(logger).to have_received(:success).with(/available on "staging"/)
-    end
+  context "when wp-cli is missing" do
+    before { allow(doctor).to receive(:in_path?).and_return(false) }
 
-    it "reports a missing remote wp-cli" do
-      allow(runner).to receive(:run).with('command -v wp').and_return(['', '', 127])
+    it "reports an error" do
       doctor.check!
-      expect(logger).to have_received(:error).with(/not available on "staging"/)
+      expect(logger).to have_received(:error).with(/not installed/)
     end
   end
 end

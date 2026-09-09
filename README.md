@@ -91,14 +91,18 @@ Remote hosts are also expected to provide `gzip`, `nice`, `rsync`, and either `m
 
 ### SSH authentication
 
-Every SSH operation (rsync, remote commands, `scp` transfers and remote hooks) goes through the system `ssh` client, so your ssh-agent, `~/.ssh/config`, `ProxyJump`/`ssh.gateway` and modern key types all behave exactly as they do on the command line. When no `ssh.password` is configured, connections run with `BatchMode=yes`: a failing key authentication is reported as an error instead of an interactive password prompt. `wordmove doctor` tests non interactive authentication against every SSH environment in your movefile.
+Every SSH operation (rsync, remote commands, `scp` transfers and remote hooks) goes through the system `ssh` client, so your ssh-agent, `~/.ssh/config`, `ProxyJump`/`ssh.gateway` and modern key types all behave exactly as they do on the command line. When no `ssh.password` is configured, connections run with `BatchMode=yes`: a failing key authentication is reported as an error instead of an interactive password prompt. `wordmove doctor` tests non interactive authentication against every SSH environment in your movefile, then checks that `rsync`, `gzip`, `mysql`/`mariadb`, `mysqldump`/`mariadb-dump` and `wp` are available there.
+
+Remote commands are always executed through `sh -c`, so the remote user's login shell can be fish, zsh, csh or anything else. Programs only need to be in the `$PATH` of a non interactive login. `ssh.gateway` is passed as `ssh -J`; a `gateway.password` cannot be used and is ignored (the jump host must accept your key or agent).
 
 ### Database sync with the `wpcli` adapter
 
 Both directions follow the same shape: dump the source, import the dump on the target, then run `wp search-replace` on the target for `vhost` and `wordpress_path`. The source database is only ever read.
 
 - `wordmove pull -d`: remote dump, local import, `wp search-replace` locally (requires `wp` locally).
-- `wordmove push -d`: local dump, remote import, `wp search-replace` on the remote over SSH (requires `wp` on the remote). Wordmove checks for `wp` on the remote before backing up or dumping anything, so a missing binary aborts with no side effects.
+- `wordmove push -d`: local dump, remote import, `wp search-replace` on the remote over SSH (requires `wp` on the remote).
+
+Before touching either database Wordmove probes both sides for the programs the operation needs (`gzip`, `mysqldump`/`mariadb-dump` on the source; `gzip`, `mysql`/`mariadb`, `wp` on the target) and aborts with a list of what is missing, so a misconfigured host never leaves a half-done sync.
 
 `wp search-replace` runs with `--all-tables`, so every table in the target database is adapted, including non WordPress tables sharing it. A backup of the target database is downloaded to the local `wp-content/` directory before any import; if the remote adaptation fails after the import, Wordmove logs that backup path so you can restore or re-run the search-replace by hand.
 

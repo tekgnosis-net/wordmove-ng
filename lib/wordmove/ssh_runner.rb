@@ -16,9 +16,18 @@ module Wordmove
       @options = (ssh_options || {}).dup
     end
 
-    # Returns [stdout, stderr, exit_code]
+    # Runs +command+ on the remote host with a POSIX sh, regardless of the
+    # remote user's login shell, and returns [stdout, stderr, exit_code].
     def run(command)
-      execute(ssh_argv + [command])
+      execute(ssh_argv + [self.class.shell_wrap(command)])
+    end
+
+    # Every command wordmove generates assumes POSIX sh syntax ($(...), &&,
+    # multi-line scripts), which a fish or csh login shell would mangle.
+    def self.shell_wrap(command)
+      # Block form on purpose: in a replacement string \' means "post-match".
+      quoted = command.gsub("'") { %q('\'') }
+      "sh -c '#{quoted}'"
     end
 
     def get(remote_path, local_path)

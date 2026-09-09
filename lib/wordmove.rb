@@ -21,6 +21,7 @@ require 'thor/group'
 require 'yaml'
 
 require 'wordmove/ssh_runner'
+require 'wordmove/prerequisites'
 require 'photocopier'
 
 require 'wordmove/cli'
