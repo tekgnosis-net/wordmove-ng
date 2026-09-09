@@ -333,6 +333,11 @@ One-time setup for a new maintainer or a fork:
 - In the GitHub repository settings create an environment named `release`, and under
   *Actions → General* enable "Allow GitHub Actions to create and approve pull requests"
   so release-please can open its PR.
+- Create a fine-grained personal access token scoped to this repository with *Contents* and
+  *Pull requests* set to read and write, and store it as the repository secret
+  `RELEASE_PLEASE_TOKEN`. Pull requests opened with the built-in Actions token never trigger
+  other workflows, so without it the release PR cannot satisfy the required `test` checks on
+  the protected `master` branch.
 
 ## Credits and licence
 

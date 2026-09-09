@@ -42,6 +42,8 @@ Releases are automated by [release-please](https://github.com/googleapis/release
 
 Pushing a `v*` tag by hand at the head of `master` triggers the same publish job.
 
+`master` is protected: changes land through pull requests whose `test` checks pass, and the rules apply to administrators too. release-please opens its PR with a fine-grained personal access token (secret `RELEASE_PLEASE_TOKEN`) because PRs opened with the built-in Actions token never trigger the checks.
+
 ## This documentation
 
 The site is built from the `docs/` folder on `master` with Jekyll and the just-the-docs theme by `.github/workflows/pages.yml`. Preview locally with

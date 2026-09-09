@@ -103,7 +103,8 @@ Update the relevant page in the same commit as any user-facing behaviour change.
   `docs:`, `chore:`, `ci:`, `test:`, `refactor:`). release-please derives the version bump
   and CHANGELOG from them; never edit `lib/wordmove/version.rb` or `CHANGELOG.md` by hand.
   Releases are published to rubygems.org by `.github/workflows/release.yml` (trusted
-  publishing, no secrets).
+  publishing). `master` is protected for everyone including admins: branch, open a PR, let
+  the six `test` checks pass, merge. release-please needs the `RELEASE_PLEASE_TOKEN` secret.
 
 - Every shell fragment that includes user/config data goes through `Shellwords.escape`
   (or `Shellwords.split` for user-supplied option strings). Secrets must never appear in

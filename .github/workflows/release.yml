@@ -13,7 +13,10 @@
 #   - rubygems.org: pending trusted publisher for gem wordmove-ng, repository
 #     tekgnosis-net/wordmove-ng, workflow release.yml, environment release
 #   - GitHub: environment "release"; Actions setting "Allow GitHub Actions to
-#     create and approve pull requests" enabled (needed by release-please)
+#     create and approve pull requests" enabled; repository secret
+#     RELEASE_PLEASE_TOKEN holding a fine-grained PAT scoped to this repository
+#     with Contents and Pull requests read/write (so release PRs run the checks
+#     that branch protection requires)
 
 name: Release
 
@@ -37,9 +40,14 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
+      # A fine-grained PAT (secret RELEASE_PLEASE_TOKEN, contents + pull-requests
+      # read/write) instead of the built-in token: PRs opened with the built-in
+      # token never trigger the Tests workflow, which the branch protection on
+      # master requires before a release PR can be merged.
       - uses: googleapis/release-please-action@v4
         id: release
         with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
