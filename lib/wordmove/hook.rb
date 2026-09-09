@@ -2,8 +2,12 @@ require 'shellwords'
 
 module Wordmove
   class Hook
-    def self.logger
-      Logger.new(STDOUT).tap { |l| l.level = Logger::DEBUG }
+    class << self
+      attr_writer :logger
+
+      def logger
+        @logger ||= Logger.new(STDOUT).tap { |l| l.level = Logger::DEBUG }
+      end
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -11,6 +15,7 @@ module Wordmove
       movefile = Wordmove::Movefile.new(cli_options[:config])
       options = movefile.fetch(false)
       environment = movefile.environment(cli_options)
+      self.logger = Logger.new(STDOUT, movefile.secrets).tap { |l| l.level = Logger::DEBUG }
 
       hooks = Wordmove::Hook::Config.new(
         options[environment][:hooks],
@@ -32,7 +37,6 @@ module Wordmove
                          "an FTP connection, but this is not possible. Skipping."
             next
           end
-
           Wordmove::Hook::Remote.run(command, options[environment], cli_options[:simulate])
         else
           next
@@ -85,8 +89,8 @@ module Wordmove
 
       def self.run(command_hash, options, simulate = false)
         wordpress_path = Shellwords.escape(options[:wordpress_path].to_s)
-
         logger.task_step true, "Exec command: #{command_hash[:command]}"
+
         return true if simulate
 
         stdout_return = `cd #{wordpress_path} && #{command_hash[:command]} 2>&1`
@@ -107,16 +111,14 @@ module Wordmove
       end
 
       def self.run(command_hash, options, simulate = false)
-        ssh_options = options[:ssh]
         wordpress_path = Shellwords.escape(options[:wordpress_path].to_s)
-
-        copier = Photocopier::SSH.new(ssh_options).tap { |c| c.logger = logger }
-
         logger.task_step false, "Exec command: #{command_hash[:command]}"
+
         return true if simulate
 
+        runner = Wordmove::SshRunner.new(options[:ssh])
         stdout, stderr, exit_code =
-          copier.exec!("cd #{wordpress_path} && #{command_hash[:command]}")
+          runner.run("cd #{wordpress_path} && #{command_hash[:command]}")
 
         if exit_code.zero?
           logger.task_step false, "Output: #{stdout}"

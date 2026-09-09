@@ -43,6 +43,12 @@ This fork keeps Wordmove usable on current Ruby, OpenSSL, MariaDB, and Docker-ba
   - Added built-in charset fallback from `utf8mb3` to `utf8mb4`.
   - These mappings can be overridden in `movefile.yml`.
 
+- SSH transport and database sync:
+  - Remote commands, `scp` transfers and remote hooks now use the system `ssh`/`scp` binaries instead of Net::SSH, so key authentication behaves exactly like rsync (agent, `~/.ssh/config`, RSA SHA-2 signatures). No more surprise password prompts on the DB step.
+  - `wordmove push -d` with the `wpcli` adapter now imports on the remote and runs `wp search-replace` there. The local database is never modified during a push; `wp` is required on the remote host instead.
+  - `wordmove doctor` tests non interactive SSH authentication and remote `wp` availability for every SSH environment.
+  - Hook and Guardian output now masks movefile secrets like the deployer log does.
+
 - WP-CLI and hooks:
   - `wp cli param-dump` now uses `--allow-root`, which avoids failures in root-owned Docker or containerized environments.
   - Hook working directories are now shell-escaped more safely.
@@ -82,10 +88,25 @@ Wordmove is orchestration glue. These tools still need to exist in your environm
 | `rsync` | Yes for SSH protocol | Used for file sync |
 | `mysql` or `mariadb` | Yes | Used for DB import and checks |
 | `mysqldump` or `mariadb-dump` | Yes | Used for DB export |
-| `wp` | Yes by default | Required by the default `wpcli` SQL adapter |
+| `wp` | Yes by default | Required by the default `wpcli` SQL adapter on the *target* side of a DB sync (see below) |
+| `ssh` / `scp` | Yes for SSH protocol | Used for remote commands, single file transfers and remote hooks |
+| `sshpass` | Only with `ssh.password` | Feeds the configured password to `ssh`, `scp` and `rsync` |
 | `lftp` | Yes for FTP/SFTP | Only needed for FTP/SFTP setups |
 
-Remote hosts are also expected to provide `gzip`, `nice`, `rsync`, and either `mysql`/`mariadb` plus `mysqldump`/`mariadb-dump` when database sync happens over SSH.
+Remote hosts are also expected to provide `gzip`, `nice`, `rsync`, and either `mysql`/`mariadb` plus `mysqldump`/`mariadb-dump` when database sync happens over SSH. With the default `wpcli` SQL adapter the remote host also needs `wp` in the login shell `$PATH` for `wordmove push -d`.
+
+### SSH authentication
+
+Every SSH operation (rsync, remote commands, `scp` transfers and remote hooks) goes through the system `ssh` client, so your ssh-agent, `~/.ssh/config`, `ProxyJump`/`ssh.gateway` and modern key types all behave exactly as they do on the command line. When no `ssh.password` is configured, connections run with `BatchMode=yes`: a failing key authentication is reported as an error instead of an interactive password prompt. `wordmove doctor` tests non interactive authentication against every SSH environment in your movefile.
+
+### Database sync with the `wpcli` adapter
+
+Both directions follow the same shape: dump the source, import the dump on the target, then run `wp search-replace` on the target for `vhost` and `wordpress_path`. The source database is only ever read.
+
+- `wordmove pull -d`: remote dump, local import, `wp search-replace` locally (requires `wp` locally).
+- `wordmove push -d`: local dump, remote import, `wp search-replace` on the remote over SSH (requires `wp` on the remote). Wordmove checks for `wp` on the remote before backing up or dumping anything, so a missing binary aborts with no side effects.
+
+`wp search-replace` runs with `--all-tables`, so every table in the target database is adapted, including non WordPress tables sharing it. A backup of the target database is downloaded to the local `wp-content/` directory before any import; if the remote adaptation fails after the import, Wordmove logs that backup path so you can restore or re-run the search-replace by hand.
 
 ## Quick Start
 

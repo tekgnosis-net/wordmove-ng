@@ -68,10 +68,10 @@ describe Wordmove::Hook do
 
     context "when pushing to a remote with ssh" do
       before do
-        allow_any_instance_of(Photocopier::SSH)
-          .to receive(:exec!)
+        allow_any_instance_of(Wordmove::SshRunner)
+          .to receive(:run)
           .with(String)
-          .and_return(['Stubbed remote stdout', nil, 0])
+          .and_return(['Stubbed remote stdout', '', 0])
       end
 
       let(:options) { common_options.merge("environment" => 'ssh_with_hooks') }
@@ -83,8 +83,16 @@ describe Wordmove::Hook do
       end
 
       it "runs registered before local hooks in the wordpress folder" do
+        # `pwd` prints the wordpress_path, which the hook logger masks as a secret
+        # exactly like the deployer logger does.
         expect { cli.invoke(:push, [], options) }
-          .to output(/#{Dir.tmpdir}/)
+          .to output(/Output: \[secret\]/)
+          .to_stdout_from_any_process
+      end
+
+      it "masks movefile secrets in hook output" do
+        expect { cli.invoke(:push, [], options) }
+          .not_to output(/#{Regexp.escape(Dir.tmpdir)}/)
           .to_stdout_from_any_process
       end
 
@@ -149,10 +157,10 @@ describe Wordmove::Hook do
 
     context "when pulling from a remote with ssh" do
       before do
-        allow_any_instance_of(Photocopier::SSH)
-          .to receive(:exec!)
+        allow_any_instance_of(Wordmove::SshRunner)
+          .to receive(:run)
           .with(String)
-          .and_return(['Stubbed remote stdout', nil, 0])
+          .and_return(['Stubbed remote stdout', '', 0])
       end
 
       let(:options) { common_options.merge("environment" => 'ssh_with_hooks') }
@@ -189,8 +197,8 @@ describe Wordmove::Hook do
 
       context "with remote hook errored" do
         before do
-          allow_any_instance_of(Photocopier::SSH)
-            .to receive(:exec!)
+          allow_any_instance_of(Wordmove::SshRunner)
+            .to receive(:run)
             .with(String)
             .and_return(['Stubbed remote stdout', 'Stubbed remote stderr', 1])
         end

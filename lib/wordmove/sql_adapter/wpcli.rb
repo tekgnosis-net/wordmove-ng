@@ -4,16 +4,20 @@ module Wordmove
   module SqlAdapter
     class Wpcli
       attr_accessor :sql_content
-      attr_reader :from, :to, :local_path
+      attr_reader :from, :to, :local_path, :remote
 
-      def initialize(source_config, dest_config, config_key, local_path)
+      # When +remote+ is true the command is meant to be executed on the remote
+      # host: +local_path+ is then the remote wordpress_path and is used as-is,
+      # and no local wp-cli availability or configuration probing is done.
+      def initialize(source_config, dest_config, config_key, local_path, remote: false)
         @from = source_config[config_key]
         @to = dest_config[config_key]
         @local_path = local_path
+        @remote = remote
       end
 
       def command
-        unless wp_in_path?
+        unless remote || wp_in_path?
           raise UnmetPeerDependencyError, "WP-CLI is not installed or not in your $PATH"
         end
 
@@ -37,6 +41,8 @@ module Wordmove
       end
 
       def cli_config_path
+        return local_path if remote
+
         load_from_yml || load_from_cli || local_path
       end
 
@@ -48,7 +54,8 @@ module Wordmove
       end
 
       def load_from_cli
-        cli_config = JSON.parse(`wp cli param-dump --allow-root --with-values`, symbolize_names: true)
+        raw = `wp cli param-dump --allow-root --with-values`
+        cli_config = JSON.parse(raw, symbolize_names: true)
         cli_config.dig(:path, :current)
       end
     end

@@ -10,7 +10,12 @@ module Wordmove
 
       def initialize(environment, options)
         super(environment, options)
+
         ssh_options = remote_options[:ssh]
+
+        # The runner must be built before Photocopier, which strips :gateway and
+        # :rsync_options out of the very same hash.
+        @runner = SshRunner.new(ssh_options)
 
         if simulate? && ssh_options[:rsync_options]
           ssh_options[:rsync_options].concat(" --dry-run")
@@ -34,6 +39,7 @@ module Wordmove
 
         return true if simulate?
 
+        check_push_db_prerequisites!
         backup_remote_db!
         adapt_local_db!
         after_push_cleanup!
@@ -44,33 +50,73 @@ module Wordmove
 
         return true if simulate?
 
+        check_pull_db_prerequisites!
         backup_local_db!
         adapt_remote_db!
         after_pull_cleanup!
       end
 
-      # In following commands, we do not guard for simulate?
-      # because it is handled through --dry-run rsync option.
-      # @see initialize
-      %w[get put get_directory put_directory delete].each do |command|
+      # Hooks for adapters that need peer dependencies (e.g. wp-cli) on one side.
+      # They run before any backup or dump so a missing dependency has no side effects.
+      def check_push_db_prerequisites!; end
+
+      def check_pull_db_prerequisites!; end
+
+      # Directory transfers go through rsync (Photocopier), which honours the
+      # --dry-run option set in #initialize when simulating.
+      %w[get_directory put_directory].each do |command|
         define_method "remote_#{command}" do |*args|
           logger.task_step false, "#{command}: #{args.join(' ')}"
           @copier.send(command, *args)
         end
       end
 
+      # Single file transfers and deletes go through the system scp/ssh binaries.
+      def remote_get(remote_path, local_path)
+        logger.task_step false, "get: #{remote_path} #{local_path}"
+        return true if simulate?
+
+        ensure_success!(@runner.get(remote_path, local_path), "get #{remote_path}")
+      end
+
+      def remote_put(local_path, remote_path)
+        logger.task_step false, "put: #{local_path} #{remote_path}"
+        return true if simulate?
+
+        ensure_success!(@runner.put(local_path, remote_path), "put #{remote_path}")
+      end
+
+      def remote_delete(remote_path)
+        logger.task_step false, "delete: #{remote_path}"
+        return true if simulate?
+
+        ensure_success!(@runner.delete(remote_path), "delete #{remote_path}")
+      end
+
       def remote_run(command)
         logger.task_step false, command
         return true if simulate?
 
-        _stdout, stderr, exit_code = @copier.exec! command
+        ensure_success!(@runner.run(command), command)
+      end
 
+      def ensure_success!(result, description)
+        _stdout, stderr, exit_code = result
         return true if exit_code.zero?
 
         raise(
           ShellCommandError,
-          "Error code #{exit_code} returned by command \"#{command}\": #{stderr}"
+          "Error code #{exit_code} returned by command \"#{description}\": #{stderr}"
         )
+      end
+
+      def remote_wp_in_path!
+        _stdout, _stderr, exit_code = @runner.run('command -v wp')
+        return true if exit_code.zero?
+
+        raise UnmetPeerDependencyError,
+              "WP-CLI is not installed on the \"#{environment}\" host (or not in the "\
+              "login shell $PATH). It is required there to adapt the database after import."
       end
 
       def download_remote_db(local_gizipped_dump_path)
@@ -108,6 +154,7 @@ module Wordmove
           logger.task "Pulling #{task.titleize}"
           local_path = local_options[:wordpress_path]
           remote_path = remote_options[:wordpress_path]
+
           remote_get_directory(remote_path, local_path,
                                pull_exclude_paths(task), pull_include_paths(task))
         end
