@@ -295,9 +295,37 @@ bundle exec rake          # specs + rubocop, what CI runs
 bundle exec rspec spec/deployer/ssh_db_spec.rb   # one file
 ```
 
-CI runs on Ruby 3.0, 3.1, 3.2, 3.3, 3.4 and 4.0. Please keep this README and the
-CHANGELOG updated when changing user-facing behaviour. See
-[CONTRIBUTING.md](CONTRIBUTING.md).
+CI runs on Ruby 3.0, 3.1, 3.2, 3.3, 3.4 and 4.0. Please keep this README updated when
+changing user-facing behaviour, and write [Conventional Commits](https://www.conventionalcommits.org)
+(`feat:`, `fix:`, `feat!:` for breaking changes): the changelog and version number are
+generated from them. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Releasing
+
+Releases are automated by [release-please](https://github.com/googleapis/release-please)
+and published to [rubygems.org](https://rubygems.org/gems/wordmove-ng) with
+[trusted publishing](https://guides.rubygems.org/trusted-publishing/), so no API key is
+stored anywhere.
+
+1. Every push to `master` updates a "release PR" that bumps `lib/wordmove/version.rb` and
+   `CHANGELOG.md` according to the commits since the last release.
+2. Merging that PR creates the `vX.Y.Z` tag and the GitHub release.
+3. The `publish` job in `.github/workflows/release.yml` then runs the test suite on the
+   tagged commit, builds the gem, pushes it to rubygems.org and attaches the `.gem` file to
+   the GitHub release.
+
+Pushing a `v*` tag by hand at the head of `master` triggers the same publish job; that is
+how 6.0.0 is cut.
+
+One-time setup for a new maintainer or a fork:
+
+- On rubygems.org, under your profile's *Trusted publishers*, add a **pending** publisher
+  for gem `wordmove-ng`, repository owner `tekgnosis-net`, repository `wordmove-ng`,
+  workflow `release.yml`, environment `release`. It becomes a regular publisher, and you
+  the gem owner, after the first push.
+- In the GitHub repository settings create an environment named `release`, and under
+  *Actions → General* enable "Allow GitHub Actions to create and approve pull requests"
+  so release-please can open its PR.
 
 ## Credits and licence
 

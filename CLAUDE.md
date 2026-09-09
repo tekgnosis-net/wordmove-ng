@@ -92,6 +92,12 @@ Key pieces:
 
 ## Conventions worth knowing
 
+- **Commit messages are Conventional Commits** (`feat:`, `fix:`, `feat!:`/`BREAKING CHANGE:`,
+  `docs:`, `chore:`, `ci:`, `test:`, `refactor:`). release-please derives the version bump
+  and CHANGELOG from them; never edit `lib/wordmove/version.rb` or `CHANGELOG.md` by hand.
+  Releases are published to rubygems.org by `.github/workflows/release.yml` (trusted
+  publishing, no secrets).
+
 - Every shell fragment that includes user/config data goes through `Shellwords.escape`
   (or `Shellwords.split` for user-supplied option strings). Secrets must never appear in
   log lines except through `Logger`, which masks `Movefile#secrets`.
