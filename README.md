@@ -37,7 +37,7 @@ Ruby 3.0 or newer is required.
 gem install wordmove-ng
 ```
 
-Until the gem is on rubygems.org, or to run the latest master:
+To run the latest master instead of a release:
 
 ```bash
 gem install specific_install
@@ -315,7 +315,9 @@ stored anywhere.
    the GitHub release.
 
 Pushing a `v*` tag by hand at the head of `master` triggers the same publish job; that is
-how 6.0.0 is cut.
+how 6.0.0 was cut. Merge the release PR only when there is something worth shipping:
+release-please keeps proposing a patch release for any Conventional Commit, including
+`ci:` and `docs:` ones.
 
 One-time setup for a new maintainer or a fork:
 

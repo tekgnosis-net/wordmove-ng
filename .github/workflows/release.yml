@@ -97,4 +97,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.release-please.outputs.tag_name || github.ref_name }}
-        run: gh release upload "$TAG" pkg/*.gem --clobber
+        # release-please creates the release itself; a hand-pushed tag has none yet.
+        run: |
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "$TAG" --notes "See CHANGELOG.md for details."
+          fi
+          gh release upload "$TAG" pkg/*.gem --clobber

@@ -5,7 +5,7 @@ All notable changes to wordmove-ng are documented here. The project follows
 are listed at https://github.com/welaika/wordmove/releases; the kokiddp fork's changes
 between 5.2.2 and this project are summarised under 6.0.0.
 
-## 6.0.0 (unreleased)
+## 6.0.0 (2026-09-09)
 
 First release as an independent project. Breaking changes are marked **breaking**.
 
