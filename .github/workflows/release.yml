@@ -21,13 +21,14 @@ on:
   push:
     branches: [master]
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   release-please:
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && github.event_name != 'workflow_dispatch' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
