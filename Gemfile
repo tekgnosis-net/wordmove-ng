@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-# Runtime dependencies live in wordmove-ng.gemspec / wordmove.gemspec
+# Runtime dependencies live in wordmove-ng.gemspec
 gemspec
 
 group :development, :test do

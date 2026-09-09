@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Wordmove is a Ruby gem / Thor CLI that mirrors WordPress installs (files + database) between a
-local checkout and remote hosts described in a `movefile.yml`. This repo is a fork
-(`origin` = tekgnosis-net/wordmove, `upstream` = kokiddp/wordmove, original = welaika/wordmove).
-Version lives in `lib/wordmove/version.rb`; bumping it is a maintainer/release step, not part of
-feature work.
+wordmove-ng is a Ruby gem / Thor CLI (executable `wordmove-ng`) that mirrors WordPress installs
+(files + database) between a local checkout and remote SSH hosts described in a `movefile.yml`.
+It is the independent successor of welaika/wordmove (via the kokiddp fork); the Ruby namespace is
+still `Wordmove` and code lives under `lib/wordmove/`. Version lives in `lib/wordmove/version.rb`;
+bumping it is a release step, not part of feature work.
 
 ## Commands
 
@@ -20,7 +20,7 @@ bundle exec rspec spec/movefile_spec.rb            # one file
 bundle exec rspec spec/movefile_spec.rb:42         # one example by line
 bundle exec rspec -e "some example description"    # by description
 bundle exec rake rubocop            # lint (rubocop 1.x, NewCops enabled; backlog lives in .rubocop_todo.yml)
-bin/wordmove --version              # run the CLI from source without installing
+bin/wordmove-ng --version           # run the CLI from source without installing
 rake install                        # build + install the gem locally
 ```
 

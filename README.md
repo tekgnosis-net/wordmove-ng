@@ -1,6 +1,6 @@
 # Wordmove
 
-![logo](https://raw.githubusercontent.com/welaika/wordmove/master/assets/images/wordmove.png)
+![logo](assets/images/wordmove-ng.png)
 
 This fork keeps Wordmove usable on current Ruby, OpenSSL, MariaDB, and Docker-based WordPress setups while preserving the original workflow and Movefile format.
 
@@ -40,8 +40,8 @@ This fork keeps Wordmove usable on current Ruby, OpenSSL, MariaDB, and Docker-ba
 
 - SSH transport and database sync:
   - Remote commands, `scp` transfers and remote hooks now use the system `ssh`/`scp` binaries instead of Net::SSH, so key authentication behaves exactly like rsync (agent, `~/.ssh/config`, RSA SHA-2 signatures). No more surprise password prompts on the DB step.
-  - `wordmove push -d` with the `wpcli` adapter now imports on the remote and runs `wp search-replace` there. The local database is never modified during a push; `wp` is required on the remote host instead.
-  - `wordmove doctor` tests non interactive SSH authentication and remote `wp` availability for every SSH environment.
+  - `wordmove-ng push -d` with the `wpcli` adapter now imports on the remote and runs `wp search-replace` there. The local database is never modified during a push; `wp` is required on the remote host instead.
+  - `wordmove-ng doctor` tests non interactive SSH authentication and remote `wp` availability for every SSH environment.
   - Hook and Guardian output now masks movefile secrets like the deployer log does.
 
 - WP-CLI and hooks:
@@ -65,7 +65,7 @@ For development from a checkout:
 
 ```bash
 bundle install
-bundle exec exe/wordmove --help
+bin/wordmove-ng --help
 ```
 
 ## Supported Ruby Versions
@@ -87,11 +87,11 @@ Wordmove is orchestration glue. These tools still need to exist in your environm
 | `ssh` / `scp` | Yes for SSH protocol | Used for remote commands, single file transfers and remote hooks |
 | `sshpass` | Only with `ssh.password` | Feeds the configured password to `ssh`, `scp` and `rsync` |
 
-Remote hosts are also expected to provide `gzip`, `nice`, `rsync`, and either `mysql`/`mariadb` plus `mysqldump`/`mariadb-dump` when database sync happens over SSH. With the default `wpcli` SQL adapter the remote host also needs `wp` in the login shell `$PATH` for `wordmove push -d`.
+Remote hosts are also expected to provide `gzip`, `nice`, `rsync`, and either `mysql`/`mariadb` plus `mysqldump`/`mariadb-dump` when database sync happens over SSH. With the default `wpcli` SQL adapter the remote host also needs `wp` in the login shell `$PATH` for `wordmove-ng push -d`.
 
 ### SSH authentication
 
-Every SSH operation (rsync, remote commands, `scp` transfers and remote hooks) goes through the system `ssh` client, so your ssh-agent, `~/.ssh/config`, `ProxyJump`/`ssh.gateway` and modern key types all behave exactly as they do on the command line. When no `ssh.password` is configured, connections run with `BatchMode=yes`: a failing key authentication is reported as an error instead of an interactive password prompt. `wordmove doctor` tests non interactive authentication against every SSH environment in your movefile, then checks that `rsync`, `gzip`, `mysql`/`mariadb`, `mysqldump`/`mariadb-dump` and `wp` are available there.
+Every SSH operation (rsync, remote commands, `scp` transfers and remote hooks) goes through the system `ssh` client, so your ssh-agent, `~/.ssh/config`, `ProxyJump`/`ssh.gateway` and modern key types all behave exactly as they do on the command line. When no `ssh.password` is configured, connections run with `BatchMode=yes`: a failing key authentication is reported as an error instead of an interactive password prompt. `wordmove-ng doctor` tests non interactive authentication against every SSH environment in your movefile, then checks that `rsync`, `gzip`, `mysql`/`mariadb`, `mysqldump`/`mariadb-dump` and `wp` are available there.
 
 Remote commands are always executed through `sh -c`, so the remote user's login shell can be fish, zsh, csh or anything else. Programs only need to be in the `$PATH` of a non interactive login. `ssh.gateway` is passed as `ssh -J`; a `gateway.password` cannot be used and is ignored (the jump host must accept your key or agent).
 
@@ -99,8 +99,8 @@ Remote commands are always executed through `sh -c`, so the remote user's login 
 
 Both directions follow the same shape: dump the source, import the dump on the target, then run `wp search-replace` on the target for `vhost` and `wordpress_path`. The source database is only ever read.
 
-- `wordmove pull -d`: remote dump, local import, `wp search-replace` locally (requires `wp` locally).
-- `wordmove push -d`: local dump, remote import, `wp search-replace` on the remote over SSH (requires `wp` on the remote).
+- `wordmove-ng pull -d`: remote dump, local import, `wp search-replace` locally (requires `wp` locally).
+- `wordmove-ng push -d`: local dump, remote import, `wp search-replace` on the remote over SSH (requires `wp` on the remote).
 
 Before touching either database Wordmove probes both sides for the programs the operation needs (`gzip`, `mysqldump`/`mariadb-dump` on the source; `gzip`, `mysql`/`mariadb`, `wp` on the target) and aborts with a list of what is missing, so a misconfigured host never leaves a half-done sync.
 
@@ -111,10 +111,10 @@ Set `global.maintenance_mode: true` (or export `WORDMOVE_MAINTENANCE_MODE=1` for
 ## Quick Start
 
 ```bash
-wordmove init
-wordmove doctor
-wordmove pull -e staging -d
-wordmove push -e production --all
+wordmove-ng init
+wordmove-ng doctor
+wordmove-ng pull -e staging -d
+wordmove-ng push -e production --all
 ```
 
 Run `wordmove help` to see all commands and flags.
@@ -229,7 +229,7 @@ local:
     socket: /home/koki/.config/Local/run/eZGRlahhA/mysql/mysqld.sock
 ```
 
-When `wordmove init` reads a `wp-config.php` entry like:
+When `wordmove-ng init` reads a `wp-config.php` entry like:
 
 ```php
 define('DB_HOST', 'localhost:/home/koki/.config/Local/run/eZGRlahhA/mysql/mysqld.sock');
@@ -243,7 +243,7 @@ Likewise, when `DB_HOST` contains a custom port such as:
 define('DB_HOST', 'localhost:3307');
 ```
 
-`wordmove init` now generates separate `host` and `port` fields and uncomments the local `port` line in the generated Movefile.
+`wordmove-ng init` now generates separate `host` and `port` fields and uncomments the local `port` line in the generated Movefile.
 
 ## Collation Fallbacks
 
