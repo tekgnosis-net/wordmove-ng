@@ -99,8 +99,10 @@ module Wordmove
         save_local_db(local_dump_path)
         normalize_collations!(local_dump_path)
         run compress_command(local_dump_path)
-        import_remote_dump(local_gzipped_dump_path)
-        adapt_remote_db_after_import!
+        with_maintenance_mode(remote: true) do
+          import_remote_dump(local_gzipped_dump_path)
+          adapt_remote_db_after_import!
+        end
       end
 
       def after_push_cleanup!
@@ -116,9 +118,35 @@ module Wordmove
         download_remote_db(local_gzipped_dump_path)
         run uncompress_command(local_gzipped_dump_path)
         normalize_collations!(local_dump_path)
-        run mysql_import_command(local_dump_path, local_options[:database])
-        run_wpcli_search_replace(remote_options, local_options, :vhost)
-        run_wpcli_search_replace(remote_options, local_options, :wordpress_path)
+        with_maintenance_mode(remote: false) do
+          run mysql_import_command(local_dump_path, local_options[:database])
+          run_wpcli_search_replace(remote_options, local_options, :vhost)
+          run_wpcli_search_replace(remote_options, local_options, :wordpress_path)
+        end
+      end
+
+      # Wraps the block in `wp maintenance-mode activate` / `deactivate` on the
+      # target when global.maintenance_mode (or WORDMOVE_MAINTENANCE_MODE) is
+      # set, so visitors see a maintenance page instead of a half-adapted site.
+      # Deactivation always runs, even when the block raises.
+      def with_maintenance_mode(remote:)
+        return yield unless maintenance_mode?
+
+        side = remote ? remote_options : local_options
+        runner = remote ? method(:remote_run) : method(:run)
+        runner.call(SqlAdapter::Wpcli.maintenance_mode_command(:activate, side[:wordpress_path]))
+        begin
+          yield
+        ensure
+          runner.call(SqlAdapter::Wpcli.maintenance_mode_command(:deactivate, side[:wordpress_path]))
+        end
+      end
+
+      def maintenance_mode?
+        env = ENV['WORDMOVE_MAINTENANCE_MODE']
+        return %w[1 true yes on].include?(env.strip.downcase) unless env.nil? || env.strip.empty?
+
+        options.dig(:global, :maintenance_mode) == true
       end
 
       def after_pull_cleanup!

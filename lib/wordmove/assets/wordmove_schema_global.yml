@@ -2,6 +2,8 @@ type: map
 mapping:
   sql_adapter: # ignored since 6.0, accepted so old movefiles still validate
     type: str
+  maintenance_mode:
+    type: bool
   collation_fallbacks:
     type: map
     mapping:

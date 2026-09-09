@@ -22,6 +22,20 @@ describe Wordmove::SqlAdapter::Wpcli do
       .and_return("{}")
   end
 
+  context ".maintenance_mode_command" do
+    it "builds the activate and deactivate commands with an escaped path" do
+      expect(described_class.maintenance_mode_command(:activate, '/var/www/my site'))
+        .to eq('wp maintenance-mode activate --path=/var/www/my\\ site --allow-root')
+      expect(described_class.maintenance_mode_command(:deactivate, '/var/www/site'))
+        .to eq('wp maintenance-mode deactivate --path=/var/www/site --allow-root')
+    end
+
+    it "rejects unknown actions" do
+      expect { described_class.maintenance_mode_command(:explode, '/x') }
+        .to raise_error(ArgumentError)
+    end
+  end
+
   context "#command" do
     context "having wp-cli.yml in local_path" do
       let(:local_path) { fixture_folder_root_relative_path }

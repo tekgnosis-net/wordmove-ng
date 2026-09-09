@@ -1,3 +1,8 @@
+global:
+  # Put the target site in `wp maintenance-mode` while its database is replaced.
+  # Can also be forced with the WORDMOVE_MAINTENANCE_MODE=1 environment variable.
+  maintenance_mode: false
+
 local:
   vhost: <%= vhost %>
   wordpress_path: "<%= wordpress_path %>" # use an absolute path here

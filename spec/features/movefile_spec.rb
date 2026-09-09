@@ -58,6 +58,11 @@ describe Wordmove::Generators::Movefile do
       expect(content).not_to include('sql_adapter')
       expect(content).not_to include('ftp')
     end
+
+    it 'creates a Movefile with maintenance mode off by default' do
+      yaml = YAML.safe_load(ERB.new(File.read(movefile)).result)
+      expect(yaml['global']['maintenance_mode']).to be false
+    end
   end
 
   context "::start in a directory with spaces" do

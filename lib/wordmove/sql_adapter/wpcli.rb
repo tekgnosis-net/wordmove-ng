@@ -16,6 +16,15 @@ module Wordmove
         @remote = remote
       end
 
+      # `wp maintenance-mode activate|deactivate` for the install at +path+.
+      def self.maintenance_mode_command(action, path)
+        unless %i[activate deactivate].include?(action)
+          raise ArgumentError, "unknown maintenance mode action #{action.inspect}"
+        end
+
+        "wp maintenance-mode #{action} --path=#{Shellwords.escape(path)} --allow-root"
+      end
+
       def command
         unless remote || wp_in_path?
           raise UnmetPeerDependencyError, "WP-CLI is not installed or not in your $PATH"

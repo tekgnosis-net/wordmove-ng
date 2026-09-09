@@ -104,6 +104,8 @@ Both directions follow the same shape: dump the source, import the dump on the t
 
 Before touching either database Wordmove probes both sides for the programs the operation needs (`gzip`, `mysqldump`/`mariadb-dump` on the source; `gzip`, `mysql`/`mariadb`, `wp` on the target) and aborts with a list of what is missing, so a misconfigured host never leaves a half-done sync.
 
+Set `global.maintenance_mode: true` (or export `WORDMOVE_MAINTENANCE_MODE=1` for a single run) to wrap the target's import and search-replace in `wp maintenance-mode activate` / `deactivate`, so visitors see WordPress's maintenance page instead of a half-adapted site. Deactivation runs even if the adaptation fails. The default is off.
+
 `wp search-replace` runs with `--all-tables`, so every table in the target database is adapted, including non WordPress tables sharing it. A backup of the target database is downloaded to the local `wp-content/` directory before any import; if the remote adaptation fails after the import, Wordmove logs that backup path so you can restore or re-run the search-replace by hand.
 
 ## Quick Start

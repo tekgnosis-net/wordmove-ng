@@ -117,6 +117,52 @@ describe Wordmove::Deployer::SSH, 'database sync' do
       end
     end
 
+    it "does not touch maintenance mode by default" do
+      silence_stream(STDOUT) { deployer.send(:push_db) }
+      expect(remote_commands.grep(/maintenance-mode/)).to be_empty
+    end
+
+    context "with global.maintenance_mode enabled" do
+      let(:cli_options) { super().merge(config: movefile_path_for('with_maintenance_mode')) }
+      let(:activate) { 'wp maintenance-mode activate --path=/var/www/your_site --allow-root' }
+      let(:deactivate) { 'wp maintenance-mode deactivate --path=/var/www/your_site --allow-root' }
+
+      it "wraps the remote import and search-replace in maintenance mode" do
+        silence_stream(STDOUT) { deployer.send(:push_db) }
+        import_index = remote_commands.index { |c| c.include?('--init-command') }
+        replace_index = remote_commands.rindex { |c| c.start_with?('wp search-replace') }
+        expect(remote_commands.index(activate)).to be < import_index
+        expect(remote_commands.index(deactivate)).to be > replace_index
+        expect(remote_commands.index(deactivate)).to eq(remote_commands.rindex(deactivate))
+      end
+
+      it "deactivates maintenance mode even when the adaptation fails" do
+        allow(runner).to receive(:run) do |cmd|
+          calls << [:remote, cmd]
+          cmd.start_with?('wp search-replace') ? ['', 'Error: boom', 1] : ['', '', 0]
+        end
+        silence_stream(STDOUT) do
+          expect { deployer.send(:push_db) }.to raise_error(Wordmove::ShellCommandError)
+        end
+        expect(remote_commands.last).to eq(deactivate)
+      end
+    end
+
+    context "with WORDMOVE_MAINTENANCE_MODE=1 in the environment" do
+      around do |example|
+        previous = ENV['WORDMOVE_MAINTENANCE_MODE']
+        ENV['WORDMOVE_MAINTENANCE_MODE'] = '1'
+        example.run
+      ensure
+        ENV['WORDMOVE_MAINTENANCE_MODE'] = previous
+      end
+
+      it "enables maintenance mode without a movefile setting" do
+        silence_stream(STDOUT) { deployer.send(:push_db) }
+        expect(remote_commands.grep(/maintenance-mode activate/).size).to eq(1)
+      end
+    end
+
     context "with --simulate" do
       let(:cli_options) { super().merge(simulate: true) }
 
@@ -147,6 +193,21 @@ describe Wordmove::Deployer::SSH, 'database sync' do
       silence_stream(STDOUT) { deployer.send(:pull_db) }
       expect(local_commands.grep(/wp search-replace/).size).to eq(2)
       expect(remote_commands.grep(/wp search-replace/)).to be_empty
+    end
+
+    context "with global.maintenance_mode enabled" do
+      let(:cli_options) { super().merge(config: movefile_path_for('with_maintenance_mode')) }
+
+      it "wraps the local import and search-replace in maintenance mode on the local install" do
+        silence_stream(STDOUT) { deployer.send(:pull_db) }
+        activate = 'wp maintenance-mode activate --path=/home/welaika/sites/your_site --allow-root'
+        deactivate = 'wp maintenance-mode deactivate --path=/home/welaika/sites/your_site ' \
+                     '--allow-root'
+        import_index = local_commands.index { |c| c.include?('--init-command') }
+        expect(local_commands.index(activate)).to be < import_index
+        expect(local_commands.last).to eq(deactivate)
+        expect(remote_commands.grep(/maintenance-mode/)).to be_empty
+      end
     end
   end
 end
