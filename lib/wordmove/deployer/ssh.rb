@@ -75,6 +75,7 @@ module Wordmove
 
       def check_prerequisites!(local:, remote:)
         logger.task_step true, "checking prerequisites"
+        warn_about_prefix_collisions
         missing_local = Prerequisites.missing_locally(local)
         missing_remote = Prerequisites.missing_remotely(@runner, remote)
         return true if missing_local.empty? && missing_remote.empty?
@@ -89,6 +90,13 @@ module Wordmove
         raise UnmetPeerDependencyError,
               "Missing programs required for the database sync (#{problems.join('; ')}). "\
               "Install them, or make sure they are in the login shell $PATH."
+      end
+
+      def warn_about_prefix_collisions
+        Wordmove::Movefile.new(options[:config]).prefix_collisions(environment).each do |short, long|
+          logger.warn "\"#{short}\" is a prefix of \"#{long}\": the search-replace of the "\
+                      "shorter value will also rewrite the longer one. Check the result."
+        end
       end
 
       def backup_remote_db!

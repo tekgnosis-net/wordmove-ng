@@ -136,6 +136,23 @@ describe Wordmove::Movefile do
     end
   end
 
+  context ".prefix_collisions" do
+    let(:path) { fixture_root_relative_path_for('movefiles') }
+
+    it "returns [short, long] pairs among the four search-replace terms" do
+      movefile = described_class.new('with_prefix_collision', path)
+      expect(movefile.prefix_collisions(:staging)).to contain_exactly(
+        ['https://site.test', 'https://site.test.example.com'],
+        ['/var/www/site', '/var/www/site-staging']
+      )
+    end
+
+    it "is empty when all terms are distinct" do
+      movefile = described_class.new('multi_environments', path)
+      expect(movefile.prefix_collisions(:staging)).to eq([])
+    end
+  end
+
   context ".secrets" do
     let(:path) { movefile_path_for('with_secrets') }
 

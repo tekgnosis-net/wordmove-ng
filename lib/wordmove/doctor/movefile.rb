@@ -71,7 +71,16 @@ module Wordmove
       def validate_remote_section(key)
         return false unless validate_protocol_presence(contents[key].keys)
 
+        validate_prefix_collisions(key)
         validate_section(key)
+      end
+
+      def validate_prefix_collisions(key)
+        movefile.prefix_collisions(key).each do |short, long|
+          movefile.logger.error "\"#{short}\" is a prefix of \"#{long}\": wp search-replace "\
+                                "would rewrite the longer value too. Use distinct vhosts "\
+                                "and wordpress_paths for local and #{key}."
+        end
       end
 
       def validate_protocol_presence(keys)

@@ -1,0 +1,19 @@
+local:
+  vhost: "https://site.test"
+  wordpress_path: "/var/www/site"
+  database:
+    name: "database_name"
+    user: "user"
+    password: "password"
+    host: "host"
+staging:
+  vhost: "https://site.test.example.com"
+  wordpress_path: "/var/www/site-staging"
+  database:
+    name: "database_name"
+    user: "user"
+    password: "password"
+    host: "host"
+  ssh:
+    host: "staging.mysite.example.com"
+    user: "user"

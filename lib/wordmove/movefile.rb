@@ -66,6 +66,23 @@ module Wordmove
       (options[:environment] || available_enviroments.first).to_sym
     end
 
+    # The four values wp search-replace rewrites when syncing +environment+.
+    # If one of them is a proper prefix of another, the replacement of the
+    # shorter one also rewrites every occurrence of the longer one, e.g.
+    # replacing "https://site.test" turns "https://site.test.backup" into
+    # "https://example.com.backup". Returns [[short, long], ...] pairs.
+    def prefix_collisions(environment)
+      options = fetch(false)
+      terms = %i[vhost wordpress_path].flat_map do |key|
+        [options.dig(:local, key), options.dig(environment.to_sym, key)]
+      end
+      terms = terms.compact.map(&:to_s).reject(&:empty?).uniq
+
+      terms.product(terms).select do |short, long|
+        short != long && long.start_with?(short)
+      end
+    end
+
     def secrets
       options = fetch(false)
 

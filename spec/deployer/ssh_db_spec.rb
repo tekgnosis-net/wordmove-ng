@@ -117,6 +117,18 @@ describe Wordmove::Deployer::SSH, 'database sync' do
       end
     end
 
+    context "with prefix collisions between search terms" do
+      let(:cli_options) { super().merge(config: movefile_path_for('with_prefix_collision')) }
+
+      it "warns and continues" do
+        # paths are movefile secrets, so the deployer logger masks them
+        expect { deployer.send(:push_db) }
+          .to output(/"\[secret\]" is a prefix of "\[secret\]-staging"/)
+          .to_stdout_from_any_process
+        expect(remote_commands.grep(/wp search-replace/).size).to eq(2)
+      end
+    end
+
     it "does not touch maintenance mode by default" do
       silence_stream(STDOUT) { deployer.send(:push_db) }
       expect(remote_commands.grep(/maintenance-mode/)).to be_empty

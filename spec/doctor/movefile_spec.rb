@@ -21,6 +21,16 @@ describe Wordmove::Doctor::Movefile do
       expect(doctor.root_keys).to eq(expected_root_keys)
     end
 
+    context ".validate! with prefix collisions" do
+      let(:movefile_name) { 'with_prefix_collision' }
+
+      it "reports each collision as an error" do
+        expect { doctor.validate! }
+          .to output(/"https:\/\/site\.test" is a prefix of "https:\/\/site\.test\.example\.com"/)
+          .to_stdout_from_any_process
+      end
+    end
+
     context ".validate!" do
       it "calls validation on each section of the actual movefile" do
         # local + staging + production; missing_protocol fails the protocol check first
