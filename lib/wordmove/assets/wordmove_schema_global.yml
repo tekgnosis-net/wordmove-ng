@@ -1,4 +1,14 @@
 type: map
 mapping:
-  sql_adapter:
-    required: true
+  sql_adapter: # ignored since 6.0, accepted so old movefiles still validate
+    type: str
+  collation_fallbacks:
+    type: map
+    mapping:
+      =:
+        type: any
+  charset_fallbacks:
+    type: map
+    mapping:
+      =:
+        type: str

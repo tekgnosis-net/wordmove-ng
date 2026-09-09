@@ -222,21 +222,6 @@ describe Wordmove::Hook do
       end
     end
 
-    context "when pushing to a remote with ftp" do
-      let(:options) { common_options.merge("environment" => 'ftp_with_hooks') }
-
-      context "having remote hooks" do
-        it "does not run the remote hooks" do
-          expect(Wordmove::Hook::Remote)
-            .to_not receive(:run)
-
-          silence_stream(STDOUT) do
-            cli.invoke(:push, [], options)
-          end
-        end
-      end
-    end
-
     context "with hooks partially filled" do
       let(:options) { common_options.merge("environment" => 'ssh_with_hooks_partially_filled') }
 

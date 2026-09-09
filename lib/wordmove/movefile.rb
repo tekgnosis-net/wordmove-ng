@@ -76,8 +76,6 @@ module Wordmove
         secrets << options.dig(env, :vhost)
         secrets << options.dig(env, :ssh, :password)
         secrets << options.dig(env, :ssh, :host)
-        secrets << options.dig(env, :ftp, :password)
-        secrets << options.dig(env, :ftp, :host)
         secrets << options.dig(env, :wordpress_path)
       end
 

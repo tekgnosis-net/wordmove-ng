@@ -68,22 +68,6 @@ mapping:
           user:
             required: true
           password:
-  ftp:
-    type: map
-    mapping:
-      user:
-        required: true
-      password:
-        required: true
-      host:
-        required: true
-      passive:
-        type: bool
-      scheme:
-        type: str
-        pattern: /\Aftp\Z|\Aftps\Z|\Asftp\Z/
-      port:
-        type: int
   hooks:
     type: map
     mapping:

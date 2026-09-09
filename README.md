@@ -91,7 +91,6 @@ Wordmove is orchestration glue. These tools still need to exist in your environm
 | `wp` | Yes by default | Required by the default `wpcli` SQL adapter on the *target* side of a DB sync (see below) |
 | `ssh` / `scp` | Yes for SSH protocol | Used for remote commands, single file transfers and remote hooks |
 | `sshpass` | Only with `ssh.password` | Feeds the configured password to `ssh`, `scp` and `rsync` |
-| `lftp` | Yes for FTP/SFTP | Only needed for FTP/SFTP setups |
 
 Remote hosts are also expected to provide `gzip`, `nice`, `rsync`, and either `mysql`/`mariadb` plus `mysqldump`/`mariadb-dump` when database sync happens over SSH. With the default `wpcli` SQL adapter the remote host also needs `wp` in the login shell `$PATH` for `wordmove push -d`.
 
@@ -298,10 +297,7 @@ File push and pull operations mirror the source. Files missing from the source c
 
 ### FTP and SFTP
 
-- `lftp` is required locally.
-- Use the relative FTP path as `production.wordpress_path`.
-- Use `production.wordpress_absolute_path` when the server layout requires it.
-- FTP support remains available, but upstream development for FTP has long been discontinued.
+FTP and SFTP support was removed in wordmove-ng 6.0. It only ever existed for shell-less shared hosts, where the database had to be handled by uploading temporary PHP scripts and URLs had to be rewritten in the dump text with a regex. A movefile with an `ftp` block now fails with a clear error. If you still need an FTP-only host, keep using the legacy `wordmove` 5.x gem for it.
 
 ## Upstream Documentation
 

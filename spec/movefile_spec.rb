@@ -152,8 +152,6 @@ describe Wordmove::Movefile do
           http://secrets.example.com
           ssh_password
           ssh_host
-          ftp_password
-          ftp_host
           /var/www/your_site
           https://foo.bar
         ]
@@ -172,8 +170,6 @@ describe Wordmove::Movefile do
           http://secrets.example.com
           ssh_password
           ssh_host
-          ftp_password
-          ftp_host
           /var/www/your_site
         ]
       )

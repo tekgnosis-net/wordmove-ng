@@ -44,8 +44,6 @@ module Wordmove
 
       def ssh_environments
         options = movefile.fetch(false)
-        return {} unless options.dig(:global, :sql_adapter).to_s == 'wpcli'
-
         options.each_with_object({}) do |(name, env), memo|
           next if %i[local global].include?(name)
           next unless env.is_a?(Hash) && env[:ssh].is_a?(Hash)

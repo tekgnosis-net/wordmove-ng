@@ -1,7 +1,8 @@
 module Wordmove
   class Doctor
     class Movefile
-      MANDATORY_SECTIONS = %i[global local].freeze
+      MANDATORY_SECTIONS = %i[local].freeze
+      OPTIONAL_SECTIONS = %i[global].freeze
       attr_reader :movefile, :contents, :root_keys
 
       def initialize(name = nil, dir = '.')
@@ -24,6 +25,13 @@ module Wordmove
         MANDATORY_SECTIONS.each do |key|
           movefile.logger.task "Validating movefile section: #{key}"
           validate_mandatory_section(key)
+        end
+
+        OPTIONAL_SECTIONS.each do |key|
+          next unless root_keys.delete(key)
+
+          movefile.logger.task "Validating movefile section: #{key}"
+          validate_section(key)
         end
 
         root_keys.each do |remote|
@@ -67,15 +75,20 @@ module Wordmove
       end
 
       def validate_protocol_presence(keys)
-        return true if keys.include?(:ssh) || keys.include?(:ftp)
+        if keys.include?(:ftp)
+          movefile.logger.error "This remote is configured with `ftp`, but FTP support was "\
+                                "removed in wordmove-ng 6.0. Switch it to `ssh`."
+          return false
+        end
+        return true if keys.include?(:ssh)
 
-        movefile.logger.error "This remote has not ssh nor ftp protocol defined"
+        movefile.logger.error "This remote has no ssh protocol defined"
 
         false
       end
 
       def validator_for(key)
-        suffix = if MANDATORY_SECTIONS.include? key
+        suffix = if (MANDATORY_SECTIONS + OPTIONAL_SECTIONS).include? key
                    key
                  else
                    'remote'

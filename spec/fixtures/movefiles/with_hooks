@@ -1,8 +1,5 @@
 <% require 'tmpdir' %>
 
-global:
-  sql_adapter: "default"
-
 local:
   vhost: "http://localhost:8080"
   wordpress_path: "<%= Dir.tmpdir %>"
@@ -51,28 +48,6 @@ ssh_with_hooks:
         - command: 'echo "Calling hook pull after local"'
           where: local
         - command: 'echo "Calling hook pull after remote"'
-          where: remote
-
-ftp_with_hooks:
-  vhost: "http://production.mysite.example.com"
-  wordpress_path: "/var/www/your_site" # use an absolute path here
-
-  database:
-    name: "database_name"
-    user: "user"
-    password: "password"
-    host: "host"
-
-  ftp:
-    user: "user"
-    password: "password"
-    host: "production.mysite.example.com"
-    passive: true
-
-  hooks:
-    push:
-      before:
-        - command: echo "Calling hook push before remote"
           where: remote
 
 ssh_with_hooks_partially_filled:

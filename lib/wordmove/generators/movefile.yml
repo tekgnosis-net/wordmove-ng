@@ -1,6 +1,3 @@
-global:
-  sql_adapter: wpcli
-
 local:
   vhost: <%= vhost %>
   wordpress_path: "<%= wordpress_path %>" # use an absolute path here
@@ -63,15 +60,8 @@ production:
   #     user: user
   #     password: password # password is optional, will use public keys if available.
 
-  # ftp:
-  #   user: user
-  #   password: password
-  #   host: host
-  #   passive: true
-  #   port: 21 # Port is optional
-  #   scheme: ftps # default `ftp`. alternative `sftp`
 
-  # hooks: # Remote hooks won't work with FTP
+  # hooks:
   #   push:
   #     before:
   #       - command: 'echo "do something"'

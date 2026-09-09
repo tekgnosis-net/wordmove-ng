@@ -12,7 +12,6 @@ describe Wordmove::Doctor::Movefile do
   context ".root_keys" do
     it "returns all the yml's root keys" do
       expected_root_keys = %i[
-        global
         local
         staging
         production
@@ -24,8 +23,9 @@ describe Wordmove::Doctor::Movefile do
 
     context ".validate!" do
       it "calls validation on each section of the actual movefile" do
-        expect(doctor).to receive(:validate_section).exactly(4).times
-        expect_any_instance_of(Wordmove::Logger).to receive(:task).exactly(5).times
+        # local + staging + production; missing_protocol fails the protocol check first
+        expect(doctor).to receive(:validate_section).exactly(3).times
+        expect_any_instance_of(Wordmove::Logger).to receive(:task).exactly(4).times
 
         silence_stream(STDOUT) { doctor.validate! }
       end

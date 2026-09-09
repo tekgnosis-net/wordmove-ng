@@ -32,11 +32,6 @@ module Wordmove
         when 'local'
           Wordmove::Hook::Local.run(command, options[:local], cli_options[:simulate])
         when 'remote'
-          if options[environment][:ftp]
-            logger.debug "You have configured remote hooks to run over "\
-                         "an FTP connection, but this is not possible. Skipping."
-            next
-          end
           Wordmove::Hook::Remote.run(command, options[environment], cli_options[:simulate])
         else
           next

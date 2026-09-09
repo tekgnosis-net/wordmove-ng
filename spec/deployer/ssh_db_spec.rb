@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Wordmove::Deployer::Ssh::WpcliSqlAdapter do
+describe Wordmove::Deployer::SSH, 'database sync' do
   let(:cli_options) do
     {
-      config: movefile_path_for('multi_environments_wpcli_sql_adapter'),
+      config: movefile_path_for('multi_environments'),
       environment: 'staging'
     }
   end

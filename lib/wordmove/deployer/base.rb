@@ -21,17 +21,30 @@ module Wordmove
           options[:local][:database][:origin] = 'local'
           options[environment][:database][:origin] = 'remote'
 
-          return FTP.new(environment, options) if options[environment][:ftp]
-
-          if options[environment][:ssh] && options[:global][:sql_adapter] == 'wpcli'
-            return Ssh::WpcliSqlAdapter.new(environment, options)
+          if options[environment][:ftp]
+            raise NoAdapterFound,
+                  "FTP support was removed in wordmove-ng 6.0, but the \"#{environment}\" "\
+                  "environment is configured with an `ftp` block. Switch it to `ssh`, or "\
+                  "keep using the legacy `wordmove` 5.x gem for FTP-only hosts."
           end
 
-          if options[environment][:ssh] && options[:global][:sql_adapter] == 'default'
-            return Ssh::DefaultSqlAdapter.new(environment, options)
-          end
+          warn_about_removed_sql_adapter(options, movefile)
+
+          return SSH.new(environment, options) if options[environment][:ssh]
 
           raise NoAdapterFound, "No valid adapter found."
+        end
+
+        # `global.sql_adapter` no longer selects anything: URL/path adaptation is
+        # always done with wp-cli on the target. Warn once so people notice.
+        def warn_about_removed_sql_adapter(options, movefile)
+          adapter = options.dig(:global, :sql_adapter)
+          return if adapter.nil? || adapter.to_s == 'wpcli'
+
+          logger(movefile.secrets).warn(
+            "`global.sql_adapter: #{adapter}` is ignored since wordmove-ng 6.0; database "\
+            "adaptation always uses wp-cli on the target. Remove the key from your movefile."
+          )
         end
 
         def current_dir
@@ -58,10 +71,6 @@ module Wordmove
       def pull_db
         logger.task "Pulling Database"
       end
-
-      def remote_get_directory; end
-
-      def remote_put_directory; end
 
       def exclude_dir_contents(path)
         "#{path}/*"
@@ -101,16 +110,6 @@ module Wordmove
 
         system(command)
         raise ShellCommandError, "Return code reports an error" unless $CHILD_STATUS.success?
-      end
-
-      def download(url, local_path)
-        logger.task_step true, "download #{url} > #{local_path}"
-
-        return true if simulate?
-
-        File.open(local_path, 'wb') do |file|
-          file << URI.open(url).read
-        end
       end
 
       def simulate?

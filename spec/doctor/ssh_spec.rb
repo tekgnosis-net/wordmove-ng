@@ -22,6 +22,8 @@ describe Wordmove::Doctor::Ssh do
       doctor.check!
       expect(Wordmove::SshRunner).to have_received(:new)
         .with(hash_including(host: 'staging.mysite.example.com')).once
+      expect(Wordmove::SshRunner).to have_received(:new)
+        .with(hash_including(host: 'production.mysite.example.com')).once
       expect(logger).to have_received(:success)
         .with(/authentication to "staging" works/)
     end
@@ -29,8 +31,8 @@ describe Wordmove::Doctor::Ssh do
     it "reports the failing command and stderr when authentication fails" do
       allow(runner).to receive(:run).with('true').and_return(['', 'Permission denied', 255])
       doctor.check!
-      expect(logger).to have_received(:error).with(/Permission denied/)
-      expect(logger).to have_received(:error).with(/ssh user@host true/)
+      expect(logger).to have_received(:error).with(/Permission denied/).twice
+      expect(logger).to have_received(:error).with(/ssh user@host true/).twice
     end
 
     it "skips remote checks when the ssh binary is missing" do

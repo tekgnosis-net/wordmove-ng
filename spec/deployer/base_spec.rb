@@ -21,9 +21,11 @@ describe Wordmove::Deployer::Base do
     end
 
     context "with ftp remote connection" do
-      it "returns an instance of FTP deployer" do
+      it "raises NoAdapterFound explaining that FTP was removed" do
+        options[:config] = movefile_path_for("with_ftp")
         options[:environment] = "production"
-        expect(described_class.deployer_for(options)).to be_a Wordmove::Deployer::FTP
+        expect { described_class.deployer_for(options) }
+          .to raise_error(Wordmove::NoAdapterFound, /FTP support was removed/)
       end
     end
 
@@ -32,17 +34,19 @@ describe Wordmove::Deployer::Base do
         options[:environment] = "staging"
       end
 
-      it "returns an instance of Ssh::Default deployer" do
+      it "returns an instance of the SSH deployer" do
         expect(described_class.deployer_for(options))
-          .to be_a Wordmove::Deployer::Ssh::DefaultSqlAdapter
+          .to be_a Wordmove::Deployer::SSH
       end
 
-      context "when Movefile is configured with 'wpcli' sql_adapter" do
-        it "returns an instance of Ssh::WpcliSqlAdapter deployer" do
-          options[:config] = movefile_path_for('multi_environments_wpcli_sql_adapter')
+      context "when the Movefile still carries a 'global.sql_adapter' key" do
+        it "warns that the key is ignored and still returns the SSH deployer" do
+          options[:config] = movefile_path_for('with_legacy_sql_adapter')
 
-          expect(described_class.deployer_for(options))
-            .to be_a Wordmove::Deployer::Ssh::WpcliSqlAdapter
+          deployer = nil
+          expect { deployer = described_class.deployer_for(options) }
+            .to output(/sql_adapter: default` is ignored/).to_stdout_from_any_process
+          expect(deployer).to be_a Wordmove::Deployer::SSH
         end
       end
 
@@ -218,26 +222,6 @@ describe Wordmove::Deployer::Base do
       )
 
       expect(command).to eq("gzip -d -f \"dummy file.sql\"")
-    end
-  end
-
-  context "#download" do
-    let(:deployer) { described_class.new(:dummy_env, options) }
-    let(:target) { Tempfile.new(['wordmove-download', '.bin']) }
-    let(:binary_content) { "\xFF\xFEwordmove".b }
-
-    before do
-      allow(URI).to receive(:open).with("https://example.test/dump").and_return(StringIO.new(binary_content))
-    end
-
-    after do
-      target.close!
-    end
-
-    it "writes downloaded content without text-mode corruption" do
-      deployer.send(:download, "https://example.test/dump", target.path)
-
-      expect(File.binread(target.path)).to eq(binary_content)
     end
   end
 

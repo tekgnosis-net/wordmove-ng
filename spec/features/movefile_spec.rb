@@ -53,11 +53,10 @@ describe Wordmove::Generators::Movefile do
       expect(content).not_to include("\n    socket:")
     end
 
-    it 'creates a Movifile having a "global.sql_adapter" key' do
-      yaml = YAML.safe_load(ERB.new(File.read(movefile)).result)
-      expect(yaml['global']).to be_present
-      expect(yaml['global']['sql_adapter']).to be_present
-      expect(yaml['global']['sql_adapter']).to eq('wpcli')
+    it 'creates a Movefile without the removed "global.sql_adapter" and "ftp" keys' do
+      content = File.read(movefile)
+      expect(content).not_to include('sql_adapter')
+      expect(content).not_to include('ftp')
     end
   end
 

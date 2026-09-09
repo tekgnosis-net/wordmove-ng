@@ -1,6 +1,3 @@
-global:
-  sql_adapter: "default"
-
 local:
   vhost: "http://localhost:8080"
   wordpress_path: "/home/welaika/sites/your_site"
@@ -35,11 +32,9 @@ production:
     password: "password"
     host: "host"
 
-  ftp:
-    user: "user"
-    password: "password"
+  ssh:
     host: "production.mysite.example.com"
-    passive: true
+    user: "user"
 
 missing_protocol:
   vhost: "http://production.mysite.example.com"
