@@ -51,6 +51,7 @@ It is the maintained, independent successor of [Wordmove](https://github.com/wel
 | know what each flag does | [Usage and flags]({{ site.baseurl }}/usage/) |
 | know exactly what happens to my database | [Database sync]({{ site.baseurl }}/database-sync/) |
 | run commands before or after a deploy | [Hooks]({{ site.baseurl }}/hooks/) |
+| schedule syncs from cron or CI | [Automation and cron]({{ site.baseurl }}/automation/) |
 | fix a problem | [Troubleshooting]({{ site.baseurl }}/troubleshooting/) |
 
 ## Credits

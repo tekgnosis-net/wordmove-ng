@@ -109,6 +109,10 @@ exclude:
 
 The same works for themes and any other folder.
 
+## Running unattended
+
+wordmove-ng never prompts, so it can run from cron, systemd timers or CI. The environment those give you is the only difference; see [Automation and cron]({{ site.baseurl }}/automation/) for a ready-made script and the SSH key setup.
+
 ## Rsync options in a continuous delivery context
 
 The default rsync flags are `-rlpt`. On a CI runner every file is freshly checked out, so `--times` triggers a full transfer every time and `--perms` may not be what you want:
