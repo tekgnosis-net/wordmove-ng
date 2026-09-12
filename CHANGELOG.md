@@ -5,6 +5,13 @@ All notable changes to wordmove-ng are documented here. The project follows
 are listed at https://github.com/welaika/wordmove/releases; the kokiddp fork's changes
 between 5.2.2 and this project are summarised under 6.0.0.
 
+## [6.0.2](https://github.com/tekgnosis-net/wordmove-ng/compare/v6.0.1...v6.0.2) (2026-09-12)
+
+
+### Documentation
+
+* add cron automation guide and contrib/wordmove-sync.sh ([#4](https://github.com/tekgnosis-net/wordmove-ng/issues/4)) ([dbe3612](https://github.com/tekgnosis-net/wordmove-ng/commit/dbe36126976f9f5a0f0793208aed89bd5c7fc787))
+
 ## [6.0.1](https://github.com/tekgnosis-net/wordmove-ng/compare/v6.0.0...v6.0.1) (2026-09-09)
 
 
