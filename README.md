@@ -320,12 +320,12 @@ stored anywhere.
 1. Every push to `master` updates a "release PR" that bumps `lib/wordmove/version.rb` and
    `CHANGELOG.md` according to the commits since the last release.
 2. Merging that PR creates the `vX.Y.Z` tag and the GitHub release.
-3. The `publish` job in `.github/workflows/release.yml` then runs the test suite on the
-   tagged commit, builds the gem, pushes it to rubygems.org and attaches the `.gem` file to
-   the GitHub release.
+3. The tag push triggers the `publish` job in `.github/workflows/release.yml`, which runs
+   the test suite on the tagged commit, builds the gem, pushes it to rubygems.org and
+   attaches the `.gem` file to the GitHub release.
 
-Pushing a `v*` tag by hand at the head of `master` triggers the same publish job; that is
-how 6.0.0 was cut. Merge the release PR only when there is something worth shipping:
+Pushing a `v*` tag by hand at the head of `master` goes through the same publish job; that
+is how 6.0.0 was cut. Merge the release PR only when there is something worth shipping:
 release-please keeps proposing a patch release for any Conventional Commit, including
 `ci:` and `docs:` ones.
 

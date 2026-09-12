@@ -38,9 +38,9 @@ Releases are automated by [release-please](https://github.com/googleapis/release
 
 1. Every push to `master` updates a "release PR" that bumps the version and the changelog from the commits since the last release. release-please proposes a patch release for any Conventional Commit, `ci:` and `docs:` included, so merge the PR only when there is something worth shipping.
 2. Merging it creates the `vX.Y.Z` tag and the GitHub release.
-3. The `publish` job in `.github/workflows/release.yml` re-runs the suite on the tagged commit, builds the gem, pushes it to rubygems.org and attaches the `.gem` file to the GitHub release.
+3. The tag push triggers the `publish` job in `.github/workflows/release.yml`, which re-runs the suite on the tagged commit, builds the gem, pushes it to rubygems.org and attaches the `.gem` file to the GitHub release.
 
-Pushing a `v*` tag by hand at the head of `master` triggers the same publish job.
+Pushing a `v*` tag by hand at the head of `master` goes through the same publish job.
 
 `master` is protected: changes land through pull requests whose `test` checks pass, and the rules apply to administrators too. release-please opens its PR with a fine-grained personal access token (secret `RELEASE_PLEASE_TOKEN`) because PRs opened with the built-in Actions token never trigger the checks.
 
