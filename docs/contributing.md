@@ -1,6 +1,6 @@
 ---
 title: Contributing and releasing
-nav_order: 11
+nav_order: 12
 ---
 
 # Contributing and releasing

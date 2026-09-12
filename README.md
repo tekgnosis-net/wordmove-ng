@@ -246,12 +246,17 @@ production:
 File sync mirrors the source: files missing on the source are deleted on the destination.
 Put anything you need to keep in `exclude`, which is always relative to `wordpress_path`.
 
+Scheduled syncs from cron or CI work out of the box; `contrib/wordmove-sync.sh` handles the
+environment cron lacks (Ruby version manager, `PATH`, no agent, no TTY, overlap lock, logs).
+See [Automation and cron](https://tekgnosis-net.github.io/wordmove-ng/automation/).
+
 The documentation site has the full reference:
 [Configuration](https://tekgnosis-net.github.io/wordmove-ng/configuration/),
 [Usage and flags](https://tekgnosis-net.github.io/wordmove-ng/usage/),
 [Database sync](https://tekgnosis-net.github.io/wordmove-ng/database-sync/),
 [Hooks](https://tekgnosis-net.github.io/wordmove-ng/hooks/),
 [Multiple environments](https://tekgnosis-net.github.io/wordmove-ng/environments/),
+[Automation and cron](https://tekgnosis-net.github.io/wordmove-ng/automation/),
 [Troubleshooting](https://tekgnosis-net.github.io/wordmove-ng/troubleshooting/).
 
 ## Logging
