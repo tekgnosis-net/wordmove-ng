@@ -35,7 +35,9 @@ in a few places where the old behaviour was unsafe. See [Upgrading from wordmove
 
 ## Installation
 
-Ruby 3.0 or newer is required.
+Ruby 3.0 or newer is required. If your system Ruby is older or missing, the docs walk
+through [installing Ruby](https://tekgnosis-net.github.io/wordmove-ng/installation/#ruby)
+with your package manager, rbenv, RVM, mise or Docker.
 
 ```bash
 gem install wordmove-ng
