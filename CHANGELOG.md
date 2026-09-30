@@ -5,6 +5,13 @@ All notable changes to wordmove-ng are documented here. The project follows
 are listed at https://github.com/welaika/wordmove/releases; the kokiddp fork's changes
 between 5.2.2 and this project are summarised under 6.0.0.
 
+## [6.0.3](https://github.com/tekgnosis-net/wordmove-ng/compare/v6.0.2...v6.0.3) (2026-09-30)
+
+
+### Documentation
+
+* expand the Ruby installation guide ([#7](https://github.com/tekgnosis-net/wordmove-ng/issues/7)) ([5972e2c](https://github.com/tekgnosis-net/wordmove-ng/commit/5972e2cf45f8ef6ebf1c2724b7637a8f4d319e11))
+
 ## [6.0.2](https://github.com/tekgnosis-net/wordmove-ng/compare/v6.0.1...v6.0.2) (2026-09-12)
 
 
