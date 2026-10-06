@@ -20,7 +20,7 @@ set -euo pipefail
 # ---- settings (override with environment variables) --------------------------
 SITE_DIR="${SITE_DIR:-/path/to/wordpress}"        # directory holding movefile.yml
 ENVIRONMENT="${ENVIRONMENT:-production}"          # remote environment (-e)
-ACTION="${ACTION:-pull}"                          # pull or push
+ACTION="${ACTION:-pull}"                          # pull, push, or auto (plan only unless COMPONENTS adds --apply)
 COMPONENTS="${COMPONENTS:---all --no-db}"         # component flags
 LOG_DIR="${LOG_DIR:-$HOME/log/wordmove}"
 KEEP_LOGS="${KEEP_LOGS:-30}"                      # how many run logs to keep
@@ -28,8 +28,8 @@ RUBY_VERSION="${RUBY_VERSION:-}"                  # e.g. ruby-3.4.9 for rvm; emp
 # -----------------------------------------------------------------------------
 
 case "$ACTION" in
-  pull|push) ;;
-  *) echo "ACTION must be pull or push, got '$ACTION'" >&2; exit 2 ;;
+  pull|push|auto) ;;
+  *) echo "ACTION must be pull, push or auto, got '$ACTION'" >&2; exit 2 ;;
 esac
 
 # Ruby version managers are not loaded by cron.

@@ -59,6 +59,47 @@ Options:
 
 `pull` copies from the remote given with `-e` to `local`; `push` copies from `local` to that remote. At least one component flag (or `--all`) is required.
 
+### `auto`
+{: .no_toc }
+
+Decides **per component** whether to push or pull, from timestamps on both sides, and prints a plan. Nothing changes unless you pass `--apply`.
+
+```bash
+wordmove-ng auto -e production -t -p -u -d          # print the plan
+wordmove-ng auto -e production --all --apply -s     # execute it as a dry run
+wordmove-ng auto -e production --all --apply        # execute it
+```
+
+```
+▬▬ Auto plan for "production" ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+  themes   PUSH   local 2026-10-06 09:12:40  remote 2026-10-01 18:03:11  local newer by 400769s
+  plugins  SKIP   local 2026-10-01 18:03:11  remote 2026-10-01 18:03:11  in sync (within 300s)
+  uploads  PULL   local 2026-09-28 11:20:02  remote 2026-10-06 08:55:30  remote newer by 682528s
+  db       PULL   local 2026-09-28 11:19:57  remote 2026-10-06 08:57:01  remote newer by 682624s
+    ℹ️  info | Plan only. Re-run with --apply to execute it (add -s for a dry run).
+```
+
+How each side is measured:
+
+| Component | Signal |
+| --- | --- |
+| uploads, themes, plugins, mu-plugins, languages | newest file modification time beneath the directory (`find … -printf '%T@'`) |
+| database | latest of `MAX(post_modified_gmt)` and `MAX(comment_date_gmt)`, via `wp db query` on each side |
+| core (`-w`) | never decided automatically; always `SKIP` |
+
+Guard rails:
+
+- Differences up to `global.auto_window` seconds (default 300) count as **in sync** and are skipped.
+- Local and remote clocks are compared first; a skew above `global.auto_clock_skew_max` seconds (default 60) aborts, a smaller one is reported as a warning.
+- A direction forbidden by the movefile shows as `BLOCKED` and is never executed.
+- If a probe fails on either side the row is `ERROR` and nothing is applied, even with `--apply`.
+- With `--apply`, pushes run first and pulls second, each wrapped in the usual `before`/`after` hooks, through exactly the same steps as `push` and `pull` (backups, prerequisites, `--simulate`).
+
+Exit codes: `0` when nothing needs to move or after a successful `--apply`, `3` when the plan has pending moves and `--apply` was not given, `1` on any error. Cron can therefore run `auto` without `--apply` as a nightly "drift report" and treat `3` as "something to look at".
+
+{: .warning }
+Timestamps are evidence, not truth. A `git checkout` or an rsync without `--times` touches every file and makes that side look newer; a plugin auto-update on production happening after your local theme work makes production "newer" and would delete your work on `--apply`. Read the plan before applying it. The database signal only covers posts and comments; option and settings changes are invisible to it.
+
 ## Flags
 
 | Flag | Meaning |
@@ -78,6 +119,7 @@ Options:
 | `--no-adapt` | import the database without running `wp search-replace` |
 | `-v`, `--verbose` | more output |
 | `--debug` | accepted for compatibility; had an effect only with the removed FTP deployer |
+| `--apply` | `auto` only: execute the plan instead of printing it |
 
 Component paths respect the `paths` section of each environment.
 

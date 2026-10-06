@@ -22,6 +22,8 @@ require 'yaml'
 
 require 'wordmove/ssh_runner'
 require 'wordmove/prerequisites'
+require 'wordmove/auto_planner'
+require 'wordmove/auto_command'
 require 'photocopier'
 
 require 'wordmove/cli'

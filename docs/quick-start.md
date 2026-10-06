@@ -72,6 +72,7 @@ A push of the database backs up the remote database to `wp-content/production-ba
 | `wordmove-ng push -e production --all --no-db` | mirror every folder, keep the production database |
 | `wordmove-ng push -e production --all --no-uploads` | everything but uploads |
 | `wordmove-ng pull -e production -d --no-adapt` | import the production database without rewriting URLs |
+| `wordmove-ng auto -e production --all` | show which components are newer on which side, change nothing |
 | `wordmove-ng list` | show every environment and its vhost |
 | `wordmove-ng help push` | all flags |
 

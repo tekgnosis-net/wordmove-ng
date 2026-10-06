@@ -1,5 +1,7 @@
 module Wordmove
   class CLI < Thor
+    include AutoCommand
+
     map %w[--version -v] => :__print_version
 
     desc "--version, -v", "Print the version"
@@ -102,6 +104,58 @@ module Wordmove
       end
 
       Wordmove::Hook.run(:pull, :after, options)
+    end
+
+    desc "auto", "Decides per component whether to push or pull, from timestamps on both sides"
+    long_desc <<-LONGDESC
+      Compares each selected component on local and on the remote (newest file
+      modification time for directories, latest post or comment change for the
+      database) and proposes a direction per component. The WordPress core is
+      never decided automatically.
+
+      Without --apply only the plan is printed and nothing changes; the exit
+      code is 3 when at least one component would move, 0 when everything is in
+      sync. With --apply the plan is executed through the regular push and pull
+      steps, honouring --simulate, forbid rules and hooks.
+    LONGDESC
+    shared_options.each do |option, args|
+      method_option option, args
+    end
+    method_option :apply, type: :boolean, default: false,
+                          desc: "Execute the plan instead of only printing it"
+    # rubocop:disable-next Metrics/MethodLength
+    def auto
+      ensure_wordpress_options_presence!(options)
+      begin
+        planner = Wordmove::AutoPlanner.new(options.deep_symbolize_keys)
+        rows = planner.plan(selected_tasks(options))
+      rescue MovefileNotFound, Wordmove::AutoPlanner::ClockSkewError,
+             UndefinedEnvironment, UnmetPeerDependencyError => e
+        logger.error(e.message)
+        exit 1
+      rescue Psych::SyntaxError => e
+        logger.error("Your movefile is not parsable due to a syntax error: #{e.message}")
+        exit 1
+      end
+
+      print_auto_plan(rows, planner.warnings, planner.environment)
+
+      if rows.any? { |r| r.direction == :error }
+        logger.error "Some components could not be compared; nothing was changed."
+        exit 1
+      end
+
+      unless Wordmove::AutoPlanner.pending?(rows)
+        logger.success "Nothing to do."
+        return
+      end
+
+      unless options[:apply]
+        logger.info "Plan only. Re-run with --apply to execute it (add -s for a dry run)."
+        exit 3
+      end
+
+      apply_auto_plan(rows, options)
     end
 
     desc "push", "Pushes WP data from local machine to remote host"
