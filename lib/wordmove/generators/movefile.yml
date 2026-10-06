@@ -2,6 +2,11 @@ global:
   # Put the target site in `wp maintenance-mode` while its database is replaced.
   # Can also be forced with the WORDMOVE_MAINTENANCE_MODE=1 environment variable.
   maintenance_mode: false
+  # `wordmove-ng auto`: timestamp differences up to this many seconds count as "in sync",
+  # and a larger clock skew between local and the remote aborts the comparison.
+  # Env overrides: WORDMOVE_AUTO_WINDOW, WORDMOVE_AUTO_CLOCK_SKEW_MAX.
+  # auto_window: 300
+  # auto_clock_skew_max: 60
 
 local:
   vhost: <%= vhost %>

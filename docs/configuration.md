@@ -100,6 +100,8 @@ production:
 | `maintenance_mode` | `false` | Wrap the target's database import and adaptation in `wp maintenance-mode activate`/`deactivate`. `WORDMOVE_MAINTENANCE_MODE=1` in the environment forces it on for one run. |
 | `collation_fallbacks` | built-in table | Collations rewritten before import, e.g. `utf8mb3_uca1400_ai_ci: utf8mb4_unicode_ci`. Setting the key replaces the default table. |
 | `charset_fallbacks` | `utf8mb3: utf8mb4` | Charsets rewritten before import. |
+| `auto_window` | `300` | `wordmove-ng auto`: timestamp differences up to this many seconds count as in sync. Env override `WORDMOVE_AUTO_WINDOW`. |
+| `auto_clock_skew_max` | `60` | `wordmove-ng auto`: abort when local and remote clocks differ by more than this many seconds. Env override `WORDMOVE_AUTO_CLOCK_SKEW_MAX`. |
 | `sql_adapter` | ignored | Accepted with a warning for 5.x movefiles. |
 
 ## `local` and each remote

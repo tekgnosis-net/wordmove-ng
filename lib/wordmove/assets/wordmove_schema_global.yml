@@ -4,6 +4,10 @@ mapping:
     type: str
   maintenance_mode:
     type: bool
+  auto_window:
+    type: int
+  auto_clock_skew_max:
+    type: int
   collation_fallbacks:
     type: map
     mapping:

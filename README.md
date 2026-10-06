@@ -73,6 +73,10 @@ Component flags: `-w` core, `-u` uploads, `-t` themes, `-p` plugins, `-m` mu-plu
 `-l` languages, `-d` database, `--all` everything (`--all --no-uploads` to exclude one).
 `-s` simulates, `-e` picks the environment, `-c` points at another movefile.
 
+`wordmove-ng auto -e production --all` compares each component on both sides by timestamp and
+prints which direction it would move; add `--apply` to execute. See the
+[usage page](https://tekgnosis-net.github.io/wordmove-ng/usage/#auto) for the signals and caveats.
+
 ## Peer dependencies
 
 wordmove-ng is orchestration glue around standard tools.

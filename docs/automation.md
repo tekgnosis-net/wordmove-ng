@@ -140,6 +140,10 @@ tail -n 40 ~/log/wordmove/production-*.log
 
 Running `wordmove-ng doctor` under the same `env -i` prefix is the quickest check that the key and every tool resolve without an agent.
 
+## Drift reports with `auto`
+
+`wordmove-ng auto -e production --all` without `--apply` compares every component on both sides and exits `3` when something has drifted, `0` when everything is in sync. Scheduled from cron with `MAILTO` set, that is a nightly "which side changed" report with no risk of moving anything: `ACTION=auto COMPONENTS="--all"` works with the shipped script since the exit code propagates. Add `--apply` only once you trust the signals for your site; see the warning on the [usage page]({{ site.baseurl }}/usage/#auto).
+
 ## Database jobs
 
 For a scheduled database push enable `global.maintenance_mode` so the seconds between import and `wp search-replace` show visitors the maintenance page instead of the wrong URLs. Scheduled database pulls are the common case (a nightly copy of production for development) and need nothing special; each run leaves a `local-backup-<timestamp>.sql.gz` in `wp-content/`, so prune those occasionally.

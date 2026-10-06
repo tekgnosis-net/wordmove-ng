@@ -86,7 +86,13 @@ Key pieces:
 - **`Prerequisites`** (`lib/wordmove/prerequisites.rb`): one `sh` probe listing missing
   programs; `DB_SOURCE`/`DB_TARGET`/`REMOTE_ALL` requirement sets shared by deployer and
   doctor.
+- **`auto` command** (`lib/wordmove/auto_planner.rb` + `auto_command.rb`): per-component
+  direction from newest-mtime (directories) or latest post/comment (db) on both sides; core
+  never decided; plan-only unless `--apply`; exit 3 = pending moves. Specs stub `SshRunner`
+  and the planner's `local_shell`.
 - **Knobs**: `global.maintenance_mode` (env override `WORDMOVE_MAINTENANCE_MODE`),
+  `global.auto_window` / `global.auto_clock_skew_max` (`WORDMOVE_AUTO_WINDOW`,
+  `WORDMOVE_AUTO_CLOCK_SKEW_MAX`),
   `global.collation_fallbacks`, `global.charset_fallbacks`. Add new toggles as movefile keys
   with an env override and document them in README + CHANGELOG in the same commit.
 
