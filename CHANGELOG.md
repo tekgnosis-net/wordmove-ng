@@ -5,6 +5,13 @@ All notable changes to wordmove-ng are documented here. The project follows
 are listed at https://github.com/welaika/wordmove/releases; the kokiddp fork's changes
 between 5.2.2 and this project are summarised under 6.0.0.
 
+## [6.1.0](https://github.com/tekgnosis-net/wordmove-ng/compare/v6.0.3...v6.1.0) (2026-10-06)
+
+
+### Features
+
+* add the auto command that picks push or pull per component ([#9](https://github.com/tekgnosis-net/wordmove-ng/issues/9)) ([6733e70](https://github.com/tekgnosis-net/wordmove-ng/commit/6733e70c5e67b2628c6e8863fb1c6f85be714f13))
+
 ## [6.0.3](https://github.com/tekgnosis-net/wordmove-ng/compare/v6.0.2...v6.0.3) (2026-09-30)
 
 
