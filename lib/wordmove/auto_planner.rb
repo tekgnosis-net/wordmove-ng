@@ -24,6 +24,8 @@ module Wordmove
     DEFAULT_WINDOW = 300
     DEFAULT_CLOCK_SKEW_MAX = 60
     DIRECTORY_TASKS = %w[uploads themes plugins mu_plugins languages].freeze
+    EPOCH = /\A\d+(\.\d+)?\z/
+    TIMESTAMP = /\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\z/
 
     attr_reader :warnings, :environment
 
@@ -130,15 +132,18 @@ module Wordmove
       "wp db query \"#{sql}\" --skip-column-names --path=#{path} --allow-root"
     end
 
-    EPOCH = /\A\d+(\.\d+)?\z/
-    TIMESTAMP = /\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\z/
-
     def parse_epoch(stdout)
       value = stdout.to_s.strip
       return nil if value.empty?
-      raise ArgumentError, "expected an epoch, got #{value.inspect[0, 40]}" unless value.match?(EPOCH)
 
+      expect_format!(value, EPOCH, 'an epoch')
       value.to_f
+    end
+
+    def expect_format!(value, pattern, what)
+      return if value.match?(pattern)
+
+      raise ArgumentError, "expected #{what}, got #{value.inspect[0, 40]}"
     end
 
     def parse_db(stdout)
@@ -146,8 +151,7 @@ module Wordmove
       return nil if stamps.empty?
 
       stamps.map do |stamp|
-        raise ArgumentError, "expected a timestamp, got #{stamp.inspect[0, 40]}" unless stamp.match?(TIMESTAMP)
-
+        expect_format!(stamp, TIMESTAMP, 'a timestamp')
         Time.parse("#{stamp} UTC").to_i
       end.max
     end
