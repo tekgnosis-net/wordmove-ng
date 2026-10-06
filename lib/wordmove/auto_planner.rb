@@ -101,13 +101,17 @@ module Wordmove
       [:blocked, "#{reason}; #{direction} forbidden by movefile"]
     end
 
-    # Returns [epoch_or_nil, error_or_nil]
+    # Returns [epoch_or_nil, error_or_nil]. Probe output comes from a remote
+    # host and is treated as untrusted: anything that is not a plain number or
+    # timestamp is reported as an error rather than interpreted.
     def probe(side, task)
       command = task == 'db' ? db_command(side) : dir_command(side, task)
       stdout, stderr, code = execute(side, command)
       return [nil, stderr.to_s.strip.empty? ? "exit #{code}" : stderr.strip] unless code.zero?
 
       [task == 'db' ? parse_db(stdout) : parse_epoch(stdout), nil]
+    rescue ArgumentError => e
+      [nil, "unparseable output: #{e.message}"]
     end
 
     def dir_command(side, task)
@@ -126,16 +130,26 @@ module Wordmove
       "wp db query \"#{sql}\" --skip-column-names --path=#{path} --allow-root"
     end
 
+    EPOCH = /\A\d+(\.\d+)?\z/
+    TIMESTAMP = /\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\z/
+
     def parse_epoch(stdout)
       value = stdout.to_s.strip
-      value.empty? ? nil : value.to_f
+      return nil if value.empty?
+      raise ArgumentError, "expected an epoch, got #{value.inspect[0, 40]}" unless value.match?(EPOCH)
+
+      value.to_f
     end
 
     def parse_db(stdout)
       stamps = stdout.to_s.lines.map(&:strip).reject { |l| l.empty? || l == 'NULL' }
       return nil if stamps.empty?
 
-      stamps.map { |s| Time.parse("#{s} UTC").to_i }.max
+      stamps.map do |stamp|
+        raise ArgumentError, "expected a timestamp, got #{stamp.inspect[0, 40]}" unless stamp.match?(TIMESTAMP)
+
+        Time.parse("#{stamp} UTC").to_i
+      end.max
     end
 
     def check_clock_skew!

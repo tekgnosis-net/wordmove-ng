@@ -131,6 +131,21 @@ describe Wordmove::AutoPlanner do
       expect(row.reason).to match(/remote probe failed/)
     end
 
+    it "reports garbage from a probe as an error instead of interpreting it" do
+      dir_stub(local, 'wp-content/themes', now - 100)
+      remote['wp-content/themes'] = "rm -rf /; 12345"
+      row = planner.plan(%w[themes]).first
+      expect(row.direction).to eq(:error)
+      expect(row.reason).to match(/unparseable output/)
+    end
+
+    it "reports a malformed database timestamp as an error" do
+      local['wp db query'] = "2024-01-02 10:00:00\nNULL\n"
+      remote['wp db query'] = "not a date\n"
+      row = planner.plan(%w[db]).first
+      expect(row.direction).to eq(:error)
+    end
+
     it "raises when clock skew exceeds the maximum" do
       remote['date +%s'] = (now + 120).to_s
       expect { planner.plan(%w[themes]) }
